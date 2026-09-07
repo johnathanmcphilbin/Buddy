@@ -1,174 +1,170 @@
 <script>
   import { onDestroy, tick } from 'svelte';
-  import { gsap } from 'gsap';
   import rough from 'roughjs/bundled/rough.esm.js';
   import RoughFrame from './RoughFrame.svelte';
 
-  const brandColors = ['#ec3750', '#ff8c37', '#f1c40f', '#33d6a6', '#338eda', '#a633d6'];
+  const CLASS_COLORS = {
+    KEYS: '#ec3750',
+    PHONE: '#ff8c37',
+    WALLET: '#33d6a6',
+    BAG: '#338eda'
+  };
+
+  const ALLOWED_CLASSES = Object.keys(CLASS_COLORS);
+  const CONFIDENCE_THRESHOLD = 0.6;
+  const STABLE_MS = 1000;
+
+  const RESPONSES = {
+    'KEYS,PHONE,WALLET,BAG': 'You’ve got everything. You’re good to go.',
+    'KEYS,PHONE,BAG': 'You’ve got your keys, phone, and bag. You’re still missing your wallet.',
+    'KEYS,PHONE': 'You’ve got your keys and phone, but you’re missing your wallet and bag.',
+    'PHONE,WALLET': 'You’ve got your phone and wallet. You probably want your keys too.',
+    'KEYS': 'You’ve got your keys. That is not enough.',
+    '': 'You appear to have prepared absolutely nothing.'
+  };
+
+  // Roboflow hosted inference is not connected yet. Fill these in and
+  // swap the body of runFrameInference() with a real call when a
+  // trained model is ready. Detection state, drawing, and speech below
+  // all work off whatever runFrameInference() returns, so nothing else
+  // needs to change.
+  const ROBOFLOW_CONFIG = {
+    modelEndpoint: '',
+    apiKey: ''
+  };
 
   let video;
   let canvas;
-  let panel;
-  let detector;
+  let cameraWrap;
+  let resizeObserver;
+
   let stream;
+  let model;
+  let rafId;
+  let stableTimer;
+
   let isRunning = false;
   let isLoading = false;
-  let detections = [];
-  let status = 'LIVE';
-  let mascotState = 'idle';
-  let lockedOnce = false;
   let stopRequested = false;
 
-  function waitForMl5() {
-    return new Promise((resolve, reject) => {
-      if (window.ml5?.objectDetector) {
-        resolve(window.ml5);
-        return;
-      }
+  let detections = [];
+  let status = '';
+  let responseText = '';
 
-      const startedAt = Date.now();
-      const interval = setInterval(() => {
-        if (window.ml5?.objectDetector) {
-          clearInterval(interval);
-          resolve(window.ml5);
-        }
+  let pendingComboKey = null;
+  let lastSpokenComboKey = null;
 
-        if (Date.now() - startedAt > 12000) {
-          clearInterval(interval);
-          reject(new Error('ml5 unavailable'));
-        }
-      }, 120);
-    });
-  }
+  // --- webcam setup -------------------------------------------------
 
-  function createDetector(ml5) {
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      let candidate;
-
-      const done = (model) => {
-        if (settled) return;
-        settled = true;
-        resolve(model || candidate);
-      };
-
-      try {
-        candidate = ml5.objectDetector('cocossd', {}, () => done(candidate));
-
-        if (candidate?.then) {
-          candidate.then(done).catch(reject);
-        }
-
-        if (candidate?.detect) {
-          setTimeout(() => done(candidate), 5500);
-        }
-      } catch (error) {
-        reject(error);
+  async function setupWebcam() {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        width: { ideal: 960 },
+        height: { ideal: 540 },
+        facingMode: 'user'
       }
     });
+
+    await tick();
+    video.srcObject = stream;
+    await video.play();
   }
 
-  async function startDemo() {
-    if (isRunning || isLoading) return;
-
-    isLoading = true;
-    stopRequested = false;
-    status = '[CAMERA STATUS]';
-    mascotState = 'confused';
-
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-          width: { ideal: 960 },
-          height: { ideal: 540 },
-          facingMode: 'user'
-        }
-      });
-
-      await tick();
-      video.srcObject = stream;
-      await video.play();
-
-      status = '[MODEL STATUS]';
-      const ml5 = await waitForMl5();
-      detector = detector || (await createDetector(ml5));
-
-      isRunning = true;
-      isLoading = false;
-      status = 'LIVE';
-      mascotState = 'idle';
-      detectLoop();
-    } catch (error) {
-      console.error(error);
-      isLoading = false;
-      isRunning = false;
-      status = '[CAMERA BLOCKED]';
-      mascotState = 'confused';
-    }
-  }
-
-  function stopDemo() {
-    stopRequested = true;
-    isRunning = false;
-    isLoading = false;
-    detections = [];
-    lockedOnce = false;
-    status = 'LIVE';
-    mascotState = 'idle';
-    clearCanvas();
-
+  function teardownWebcam() {
     stream?.getTracks().forEach((track) => track.stop());
     stream = null;
     if (video) video.srcObject = null;
   }
 
-  function detectLoop() {
-    if (stopRequested || !isRunning || !detector || !video) return;
+  // --- model loading --------------------------------------------------
 
-    detector.detect(video, (error, results) => {
-      if (error) {
-        console.error(error);
-        status = '[DETECTION ERROR]';
-        requestAnimationFrame(detectLoop);
-        return;
+  async function loadModel() {
+    // Placeholder until a trained Roboflow model is connected. Returning
+    // null keeps the demo honest: no detections are drawn or spoken for
+    // until a real model is wired up here.
+    return null;
+  }
+
+  // --- frame inference --------------------------------------------------
+
+  async function runFrameInference(activeModel, videoEl) {
+    if (!activeModel) return [];
+
+    // Example of what this looks like once a Roboflow model is connected:
+    // const response = await fetch(
+    //   `${ROBOFLOW_CONFIG.modelEndpoint}?api_key=${ROBOFLOW_CONFIG.apiKey}`,
+    //   { method: 'POST', body: frameToBlob(videoEl) }
+    // );
+    // const { predictions } = await response.json();
+    // return predictions;
+
+    return [];
+  }
+
+  // --- detection state --------------------------------------------------
+
+  function updateDetectionState(rawPredictions) {
+    const bestByClass = new Map();
+
+    rawPredictions.forEach((prediction) => {
+      const label = String(prediction.class ?? prediction.label ?? '').toUpperCase();
+      const score = prediction.confidence ?? prediction.score ?? 0;
+
+      if (!ALLOWED_CLASSES.includes(label)) return;
+      if (score < CONFIDENCE_THRESHOLD) return;
+
+      const existing = bestByClass.get(label);
+      if (!existing || score > existing.score) {
+        bestByClass.set(label, {
+          label,
+          score,
+          x: prediction.x ?? prediction.bbox?.[0] ?? 0,
+          y: prediction.y ?? prediction.bbox?.[1] ?? 0,
+          width: prediction.width ?? prediction.bbox?.[2] ?? 0,
+          height: prediction.height ?? prediction.bbox?.[3] ?? 0
+        });
       }
-
-      detections = Array.isArray(results) ? results : [];
-      drawDetections();
-
-      if (detections.length > 0) {
-        mascotState = 'locked';
-        if (!lockedOnce) {
-          lockedOnce = true;
-          gsap.fromTo(
-            panel,
-            { scale: 0.96 },
-            { scale: 1, duration: 0.55, ease: 'back.out(3.2)' }
-          );
-        }
-      } else {
-        mascotState = 'idle';
-        lockedOnce = false;
-      }
-
-      setTimeout(detectLoop, 90);
     });
+
+    return Array.from(bestByClass.values());
   }
 
-  function normalizeDetection(detection) {
-    return {
-      x: detection.x ?? detection.bbox?.[0] ?? detection.boundingBox?.originX ?? 0,
-      y: detection.y ?? detection.bbox?.[1] ?? detection.boundingBox?.originY ?? 0,
-      width: detection.width ?? detection.bbox?.[2] ?? detection.boundingBox?.width ?? 0,
-      height: detection.height ?? detection.bbox?.[3] ?? detection.boundingBox?.height ?? 0,
-      label: detection.label ?? detection.class ?? detection.className ?? '[DETECTION LABEL]',
-      score: detection.confidence ?? detection.score ?? detection.probability ?? 0
-    };
+  function getComboKey(currentDetections) {
+    return ALLOWED_CLASSES.filter((label) => currentDetections.some((d) => d.label === label)).join(',');
   }
+
+  // --- combination logic --------------------------------------------------
+
+  function handleComboStability(comboKey) {
+    if (comboKey !== pendingComboKey) {
+      pendingComboKey = comboKey;
+      clearTimeout(stableTimer);
+      stableTimer = setTimeout(() => {
+        if (comboKey === pendingComboKey && comboKey !== lastSpokenComboKey) {
+          lastSpokenComboKey = comboKey;
+          const response = RESPONSES[comboKey];
+          if (response) speakResponse(response);
+        }
+      }, STABLE_MS);
+    }
+  }
+
+  // --- speech output --------------------------------------------------
+
+  function speakResponse(text) {
+    window.speechSynthesis?.cancel();
+    responseText = text;
+
+    if (!window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // --- bounding box drawing --------------------------------------------------
 
   function setupCanvas() {
-    const rect = canvas?.getBoundingClientRect();
+    const rect = cameraWrap?.getBoundingClientRect();
     if (!rect) return null;
 
     const dpr = window.devicePixelRatio || 1;
@@ -185,11 +181,10 @@
   }
 
   function clearCanvas() {
-    const setup = setupCanvas();
-    if (!setup) return;
+    setupCanvas();
   }
 
-  function drawDetections() {
+  function drawBoundingBoxes(currentDetections) {
     const setup = setupCanvas();
     if (!setup || !video?.videoWidth || !video?.videoHeight) return;
 
@@ -200,15 +195,16 @@
     const offsetX = (width - drawnWidth) / 2;
     const offsetY = (height - drawnHeight) / 2;
 
-    detections.map(normalizeDetection).forEach((detection, index) => {
-      const color = brandColors[index % brandColors.length];
-      const x = offsetX + detection.x * scale;
-      const y = offsetY + detection.y * scale;
+    currentDetections.forEach((detection, index) => {
+      const color = CLASS_COLORS[detection.label] || '#26324d';
       const boxWidth = detection.width * scale;
       const boxHeight = detection.height * scale;
-      const label = detection.score
-        ? `${detection.label} ${Math.round(detection.score * 100)}%`
-        : detection.label;
+      const rawX = offsetX + detection.x * scale;
+      const y = offsetY + detection.y * scale;
+      // the video preview is mirrored (selfie style), so boxes are
+      // mirrored to match rather than flipping the whole canvas
+      const x = width - rawX - boxWidth;
+      const labelText = `${detection.label} ${Math.round(detection.score * 100)}%`;
 
       rc.rectangle(x, y, boxWidth, boxHeight, {
         stroke: color,
@@ -219,7 +215,7 @@
       });
 
       ctx.font = '700 14px Space Grotesk';
-      const labelWidth = ctx.measureText(label).width + 18;
+      const labelWidth = ctx.measureText(labelText).width + 18;
       const labelHeight = 26;
       const labelY = Math.max(8, y - labelHeight - 4);
 
@@ -233,8 +229,68 @@
       });
 
       ctx.fillStyle = '#26324d';
-      ctx.fillText(label, x + 9, labelY + 18);
+      ctx.fillText(labelText, x + 9, labelY + 18);
     });
+  }
+
+  // --- main loop --------------------------------------------------
+
+  async function frameLoop() {
+    if (stopRequested || !isRunning) return;
+
+    const rawPredictions = await runFrameInference(model, video);
+    detections = updateDetectionState(rawPredictions);
+    drawBoundingBoxes(detections);
+    handleComboStability(getComboKey(detections));
+
+    rafId = requestAnimationFrame(frameLoop);
+  }
+
+  async function startDemo() {
+    if (isRunning || isLoading) return;
+
+    isLoading = true;
+    stopRequested = false;
+    responseText = '';
+    lastSpokenComboKey = null;
+    pendingComboKey = null;
+
+    try {
+      await setupWebcam();
+      model = await loadModel();
+
+      isRunning = true;
+      isLoading = false;
+      status = 'LIVE';
+
+      resizeObserver = resizeObserver || new ResizeObserver(() => drawBoundingBoxes(detections));
+      resizeObserver.observe(cameraWrap);
+
+      frameLoop();
+    } catch (error) {
+      console.error(error);
+      isLoading = false;
+      isRunning = false;
+      status = '';
+    }
+  }
+
+  function stopDemo() {
+    stopRequested = true;
+    isRunning = false;
+    isLoading = false;
+    detections = [];
+    status = '';
+    responseText = '';
+    pendingComboKey = null;
+    lastSpokenComboKey = null;
+
+    clearTimeout(stableTimer);
+    cancelAnimationFrame(rafId);
+    window.speechSynthesis?.cancel();
+    resizeObserver?.disconnect();
+    clearCanvas();
+    teardownWebcam();
   }
 
   onDestroy(() => {
@@ -265,9 +321,9 @@
       </div>
     </div>
 
-    <div class="worked-demo" bind:this={panel}>
+    <div class="worked-demo">
       <RoughFrame stroke="#f1c40f" fill="#fdfbf5" seed={54} radius={28} roughness={2.1}>
-        <div class="camera-wrap">
+        <div class="camera-wrap" bind:this={cameraWrap}>
           {#if stream}
             <video bind:this={video} muted playsinline></video>
           {/if}
@@ -277,7 +333,7 @@
           {/if}
         </div>
       </RoughFrame>
-      <p class="scribble caption-note">[EXAMPLE CAPTION]</p>
+      <p class="scribble caption-note" aria-live="polite">{responseText}</p>
     </div>
   </div>
 </section>

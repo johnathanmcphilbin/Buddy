@@ -5,7 +5,6 @@
   import RoughDivider from './lib/RoughDivider.svelte';
   import RoughFrame from './lib/RoughFrame.svelte';
   import ShowcaseStill from './lib/ShowcaseStill.svelte';
-  import StepGraphic from './lib/StepGraphic.svelte';
   import BuildVisual from './lib/BuildVisual.svelte';
   import StepArrow from './lib/StepArrow.svelte';
   import WorkedExample from './lib/WorkedExample.svelte';
@@ -42,12 +41,42 @@
   ];
 
   const showcaseCards = [
-    { palette: ['#ec3750', '#338eda', '#33d6a6'], seed: 101 },
-    { palette: ['#ff8c37', '#a633d6', '#f1c40f'], seed: 111 },
-    { palette: ['#33d6a6', '#ec3750', '#338eda'], seed: 121 },
-    { palette: ['#338eda', '#f1c40f', '#a633d6'], seed: 131 },
-    { palette: ['#a633d6', '#33d6a6', '#ff8c37'], seed: 141 },
-    { palette: ['#f1c40f', '#338eda', '#ec3750'], seed: 151 }
+    {
+      palette: ['#ec3750', '#338eda', '#33d6a6'],
+      seed: 101,
+      title: 'Ready to Leave',
+      description: 'Checks for your keys, phone, wallet, and bag, then tells you what you forgot before you walk out the door.'
+    },
+    {
+      palette: ['#ff8c37', '#a633d6', '#f1c40f'],
+      seed: 111,
+      title: 'Study Buddy',
+      description: 'Looks at your desk and tells you if you’re missing your laptop, notebook, calculator, or pens.'
+    },
+    {
+      palette: ['#33d6a6', '#ec3750', '#338eda'],
+      seed: 121,
+      title: 'Hand Sign Controller',
+      description: 'Recognizes different hand signs and turns them into commands, like changing music, starting a timer, or making Buddy say something back.'
+    },
+    {
+      palette: ['#338eda', '#f1c40f', '#a633d6'],
+      seed: 131,
+      title: 'Card Counter',
+      description: 'Recognizes cards as you show them to the camera, keeps a running count, and reads the total out loud.'
+    },
+    {
+      palette: ['#a633d6', '#33d6a6', '#ff8c37'],
+      seed: 141,
+      title: 'Snack Patrol',
+      description: 'Notices what food keeps appearing on your desk and starts commenting when the same thing shows up again.'
+    },
+    {
+      palette: ['#f1c40f', '#338eda', '#ec3750'],
+      seed: 151,
+      title: 'Room Checker',
+      description: 'Looks around a space and tells you if certain things are there, missing, or out of place.'
+    }
   ];
 
   const faqs = Array.from({ length: 8 }, (_, index) => index);
@@ -84,12 +113,13 @@
     <span>Buddy</span>
   </a>
   <nav aria-label="Primary">
-    <a href="#how">[NAV HOW]</a>
-    <a href="#example">[NAV EXAMPLE]</a>
-    <a href="#showcase">[NAV SHOWCASE]</a>
-    <a href="#faq">[NAV FAQ]</a>
+    <a href="#how">How it works</a>
+    <a href="#example">Try a Buddy</a>
+    <a href="#showcase">Ideas</a>
+    <a href="#faq">FAQ</a>
+    <a href="/shop.html">Shop</a>
   </nav>
-  <a class="age-pill" href="#reward">
+  <a class="age-pill" href="/shop.html">
     <RoughFrame variant="brackets" stroke="#ec3750" seed={12} inset={4} bracketLength={18}>
       <span>[AGES 13-18]</span>
     </RoughFrame>
@@ -167,16 +197,56 @@
     </div>
   </section>
 
+  <section class="section shop-teaser-section" id="shop-teaser">
+    <div class="section-shell shop-teaser-grid">
+      <div class="shop-teaser-copy">
+        <p class="eyebrow">THE BUDDY SHOP</p>
+        <h2>Build more. Upgrade your Buddy.</h2>
+        <p class="section-lede">Every hour you work earns you 1 Bit. Spend your Bits on things that help you take Buddy further, like a better webcam, AI credits, a microphone, Roboflow credits, or hardware.</p>
+        <p class="shop-teaser-rate">1 HOUR = 1 BIT</p>
+        <a class="button secondary-button shop-teaser-cta" href="/shop.html">Visit the shop →</a>
+      </div>
+
+      <div class="shop-teaser-diagram">
+        <svg class="shop-teaser-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M22 20 C 30 28, 38 34, 47 46" fill="none" stroke="#ec3750" stroke-width="0.6" stroke-linecap="round" />
+          <path d="M78 16 C 68 24, 60 32, 52 44" fill="none" stroke="#ff8c37" stroke-width="0.6" stroke-linecap="round" />
+          <path d="M76 74 C 66 68, 60 62, 54 54" fill="none" stroke="#338eda" stroke-width="0.6" stroke-linecap="round" />
+        </svg>
+
+        <div class="shop-teaser-buddy">
+          <Mascot state="idle" size={128} />
+          <span class="shop-teaser-buddy-label">BUDDY</span>
+        </div>
+
+        <div class="shop-teaser-tag shop-teaser-tag-webcam">
+          <span class="shop-teaser-tag-label">WEBCAM</span>
+          <span class="shop-teaser-tag-price">8 Bits</span>
+        </div>
+
+        <div class="shop-teaser-tag shop-teaser-tag-brain">
+          <span class="shop-teaser-tag-label">AI BRAIN</span>
+          <span class="shop-teaser-tag-price">2 Bits</span>
+        </div>
+
+        <div class="shop-teaser-tag shop-teaser-tag-mic">
+          <span class="shop-teaser-tag-label">MICROPHONE</span>
+          <span class="shop-teaser-tag-price">7 Bits</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <WorkedExample />
 
   <section class="section showcase-section" id="showcase">
     <div class="section-shell">
       <div class="section-heading split-heading">
         <div>
-          <p class="eyebrow">[SHOWCASE LABEL]</p>
-          <h2>[SHOWCASE HEADLINE]</h2>
+          <p class="eyebrow">IDEAS TO STEAL</p>
+          <h2>What could your Buddy do?</h2>
         </div>
-        <p class="section-lede">[SHOWCASE SUBHEAD]</p>
+        <p class="section-lede">Here are a few things you could build. Start with one of these, remix it, or make something completely different.</p>
       </div>
 
       <div class="showcase-grid">
@@ -184,36 +254,19 @@
           <article class="submission-card">
             <RoughFrame stroke={card.palette[0]} fill="#ffffff" seed={card.seed} radius={22} roughness={2}>
               <div class="submission-inner">
-                <ShowcaseStill palette={card.palette} seed={card.seed} />
+                <ShowcaseStill palette={card.palette} seed={card.seed} variant={index} />
                 <div class="submission-meta">
                   <div>
-                    <h3>[NAME]</h3>
-                    <p>[AGE] / [LOCATION]</p>
+                    <h3>{card.title}</h3>
+                    <p>PROJECT IDEA</p>
                   </div>
                   <span class="mini-dot" style={`--dot:${card.palette[1]}`}></span>
                 </div>
-                <p class="submission-description">[SUBMISSION DESCRIPTION]</p>
+                <p class="submission-description">{card.description}</p>
               </div>
             </RoughFrame>
           </article>
         {/each}
-      </div>
-    </div>
-  </section>
-
-  <section class="section reward-section" id="reward">
-    <div class="section-shell reward-layout">
-      <div class="reward-copy">
-        <p class="eyebrow">[REWARD LABEL]</p>
-        <h2>[REWARD HEADLINE]</h2>
-        <p class="section-lede">[REWARD DESCRIPTION]</p>
-      </div>
-      <div class="reward-prize">
-        <RoughFrame variant="brackets" stroke="#a633d6" seed={93} inset={4} bracketLength={44}>
-          <div class="prize-graphic" aria-label="[PRIZE IMAGE]">
-            <StepGraphic type="reward" accent="#ec3750" secondary="#338eda" />
-          </div>
-        </RoughFrame>
       </div>
     </div>
   </section>
