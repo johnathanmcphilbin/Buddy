@@ -1,0 +1,21 @@
+{
+  "name": "boxed-in",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@lottiefiles/svelte-lottie-player": "^0.3.1",
+    "gsap": "^3.12.5",
+    "roughjs": "^4.6.6",
+    "svelte": "^4.2.20"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "vite": "^5.4.11"
+  }
+}
