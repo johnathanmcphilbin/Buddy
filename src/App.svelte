@@ -148,7 +148,7 @@
 <header class="site-header">
   <div class="brand-lockup">
     <a class="hackclub-flag-link" href="https://hackclub.com" target="_blank" rel="noopener" aria-label="Hack Club">
-      <img class="hackclub-flag" src="https://assets.hackclub.com/flag-orpheus-top.svg" alt="Hack Club" />
+      <img class="hackclub-flag" src="/images/hackclub-flag.svg" alt="Hack Club" />
     </a>
     <a href="#top" aria-label="Buddy">
       <span>Buddy</span>
@@ -350,7 +350,7 @@
 <footer class="site-footer">
   <div class="section-shell footer-layout">
     <div class="footer-brand">
-      <img src="https://assets.hackclub.com/flag-orpheus-top.svg" alt="Hack Club" />
+      <img src="/images/hackclub-flag.svg" alt="Hack Club" />
       <h2>Buddy</h2>
       <p>[HACK CLUB BRANDING LINE]</p>
     </div>

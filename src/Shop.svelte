@@ -155,7 +155,7 @@
 
 <header class="site-header">
   <a class="brand-lockup" href="/">
-    <img src="https://assets.hackclub.com/flag-orpheus-top.svg" alt="Hack Club" />
+    <img src="/images/hackclub-flag.svg" alt="Hack Club" />
     <span>Buddy</span>
   </a>
   <nav aria-label="Primary">
