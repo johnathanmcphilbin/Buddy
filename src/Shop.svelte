@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import RoughFrame from './lib/RoughFrame.svelte';
-  import { bits, buddyLevel, purchaseUpgrade } from './lib/buddyStore.js';
+  import { bits, buddyLevel, purchasedUpgrades } from './lib/buddyStore.js';
 
   const categories = ['ALL', 'EYES', 'BRAIN', 'VOICE', 'WORLD'];
 
@@ -12,6 +12,7 @@
       icon: 'eyes',
       items: [
         {
+          id: 'better-eyes',
           title: 'Give Buddy Better Eyes',
           item: 'Logitech C270 Webcam',
           price: 8,
@@ -20,6 +21,7 @@
           group: 'better-eyes'
         },
         {
+          id: 'better-lighting',
           title: 'Better Lighting',
           item: 'USB Desk Light',
           price: 6,
@@ -28,6 +30,7 @@
           group: null
         },
         {
+          id: 'better-vision',
           title: 'Give Buddy Better Vision',
           item: 'Roboflow Credits',
           price: 2,
@@ -43,6 +46,7 @@
       icon: 'brain',
       items: [
         {
+          id: 'brain-10',
           title: 'Give Buddy a Brain',
           item: '$10 AI Credit Grant',
           price: 2,
@@ -51,6 +55,7 @@
           group: 'brain'
         },
         {
+          id: 'brain-25',
           title: 'Give Buddy a Bigger Brain',
           item: '$25 AI Credit Grant',
           price: 5,
@@ -59,6 +64,7 @@
           group: 'brain'
         },
         {
+          id: 'memory',
           title: 'Give Buddy a Memory',
           item: 'Database / Storage Credit Grant',
           price: 3,
@@ -67,6 +73,7 @@
           group: 'memory'
         },
         {
+          id: 'training-power',
           title: 'Train Buddy Properly',
           item: 'Roboflow Core',
           price: 20,
@@ -82,6 +89,7 @@
       icon: 'voice',
       items: [
         {
+          id: 'ears',
           title: 'Give Buddy Ears',
           item: 'USB Microphone',
           price: 7,
@@ -90,6 +98,7 @@
           group: 'ears'
         },
         {
+          id: 'custom-voice',
           title: 'Give Buddy a Voice',
           item: 'ElevenLabs Voice Creator',
           price: 3,
@@ -105,6 +114,7 @@
       icon: 'world',
       items: [
         {
+          id: 'body',
           title: 'Give Buddy a Body',
           item: '$25 Hardware Grant',
           price: 5,
@@ -113,6 +123,7 @@
           group: 'body'
         },
         {
+          id: 'face',
           title: 'Give Buddy a Face',
           item: 'Small Display Grant',
           price: 8,
@@ -121,6 +132,7 @@
           group: 'face'
         },
         {
+          id: 'more-senses',
           title: 'Give Buddy More Senses',
           item: 'Sensor Hardware Grant',
           price: 5,
@@ -136,38 +148,74 @@
 
   let activeCategory = 'ALL';
   let selectedItem = null;
+  let hackatimeConnected = false;
+  let isClaiming = false;
+  let claimError = '';
 
-  // The real Bit balance comes from Airtable's review ledger (approved
-  // submissions only), not from local demo state. This overrides the
-  // stored default the first time it's known; purchases still deduct
-  // locally from there for now, since server-side spend tracking is a
-  // separate follow-up.
-  onMount(async () => {
+  // The real Bit balance = Airtable's review ledger minus everything
+  // already claimed in the shop — never calculated or adjusted locally.
+  async function loadBalance() {
     try {
       const response = await fetch('/api/bits/status');
       const data = await response.json();
-      if (typeof data.approvedBits === 'number') {
-        bits.set(data.approvedBits);
+      hackatimeConnected = data.status !== 'Not connected';
+      if (typeof data.balance === 'number') {
+        bits.set(data.balance);
       }
     } catch {
       // Leave the locally stored balance as-is if the ledger can't be reached.
     }
-  });
+  }
+
+  onMount(loadBalance);
 
   $: visibleBranches = branches.filter((branch) => activeCategory === 'ALL' || branch.key === activeCategory);
 
   function openClaim(item) {
+    if (!hackatimeConnected) {
+      window.location.href = '/#hackatime';
+      return;
+    }
+    claimError = '';
     selectedItem = item;
   }
 
   function closeModal() {
     selectedItem = null;
+    claimError = '';
   }
 
-  function confirmClaim() {
+  async function confirmClaim() {
     if (!selectedItem) return;
-    purchaseUpgrade(selectedItem.price, selectedItem.group);
-    selectedItem = null;
+
+    isClaiming = true;
+    claimError = '';
+
+    try {
+      const response = await fetch('/api/shop/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId: selectedItem.id })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || 'Could not claim this upgrade right now.');
+
+      if (!data.claimed) {
+        claimError = data.error || 'You need more Bits for this upgrade.';
+        if (typeof data.balance === 'number') bits.set(data.balance);
+        return;
+      }
+
+      bits.set(data.balance);
+      if (data.group) purchasedUpgrades.update((list) => (list.includes(data.group) ? list : [...list, data.group]));
+      selectedItem = null;
+    } catch (error) {
+      claimError = error.message;
+    } finally {
+      isClaiming = false;
+    }
   }
 </script>
 
@@ -310,14 +358,23 @@
   <div class="modal-backdrop" role="presentation" on:click={closeModal}>
     <div class="modal-panel" role="dialog" aria-modal="true" on:click|stopPropagation>
       <RoughFrame stroke="#26324d" fill="#fffdf6" seed={77} radius={24} roughness={1.9}>
-        {#if $bits >= selectedItem.price}
+        {#if claimError}
+          <div class="modal-inner">
+            <h3>{claimError}</h3>
+            <div class="modal-actions">
+              <button type="button" class="button secondary-button" on:click={closeModal}>KEEP BUILDING</button>
+            </div>
+          </div>
+        {:else if $bits >= selectedItem.price}
           <div class="modal-inner">
             <h3>Spend {selectedItem.price} Bits?</h3>
             <p>This will use {selectedItem.price} of your {$bits} earned Bits.</p>
             <p>You’ll have {$bits - selectedItem.price} Bits left.</p>
             <div class="modal-actions">
-              <button type="button" class="button quiet-button" on:click={closeModal}>NEVER MIND</button>
-              <button type="button" class="button secondary-button" on:click={confirmClaim}>CLAIM UPGRADE</button>
+              <button type="button" class="button quiet-button" on:click={closeModal} disabled={isClaiming}>NEVER MIND</button>
+              <button type="button" class="button secondary-button" on:click={confirmClaim} disabled={isClaiming}>
+                {isClaiming ? 'Claiming…' : 'CLAIM UPGRADE'}
+              </button>
             </div>
           </div>
         {:else}

@@ -7,6 +7,7 @@ const AIRTABLE_CONTENT_BASE = 'https://content.airtable.com/v0';
 
 const SUBMISSION_TABLE = 'YSWS Project Submission';
 const LEDGER_TABLE = 'Buddy Bits Ledger';
+const CLAIMS_TABLE = 'Buddy Shop Claims';
 
 function requireEnv(name) {
   const value = process.env[name]?.trim();
@@ -155,4 +156,45 @@ export async function getLatestLedgerEntry(hackatimeUsername) {
     trackedHours: record.fields['Tracked Hours At Submission'] ?? 0,
     reviewerNotes: record.fields['Reviewer Notes'] ?? null
   };
+}
+
+export async function createShopClaim(claim) {
+  const fields = {
+    'Hackatime Username': claim.hackatimeUsername,
+    'Submitter Email': claim.email,
+    'Item Title': claim.itemTitle,
+    'Item Name': claim.itemName,
+    'Bits Spent': claim.price,
+    'Claimed At': new Date().toISOString(),
+    Fulfilled: false
+  };
+
+  const data = await airtableRequest(`${encodeURIComponent(CLAIMS_TABLE)}`, {
+    method: 'POST',
+    body: JSON.stringify({ fields })
+  });
+
+  return data.id;
+}
+
+// Sum of every claim a participant has made so far, so the real balance
+// is (approved Bits) minus (everything they've spent) — never something
+// the browser can adjust on its own.
+export async function getTotalSpentBits(hackatimeUsername) {
+  if (!hackatimeUsername) return 0;
+
+  const filterFormula = `{Hackatime Username} = "${hackatimeUsername.replace(/"/g, '\\"')}"`;
+  const params = new URLSearchParams({ filterByFormula: filterFormula });
+
+  let total = 0;
+  let offset;
+
+  do {
+    if (offset) params.set('offset', offset);
+    const data = await airtableRequest(`${encodeURIComponent(CLAIMS_TABLE)}?${params.toString()}`);
+    total += (data.records ?? []).reduce((sum, record) => sum + (record.fields['Bits Spent'] ?? 0), 0);
+    offset = data.offset;
+  } while (offset);
+
+  return total;
 }
