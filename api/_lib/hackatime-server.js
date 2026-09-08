@@ -4,10 +4,14 @@
 // working integration. Client secret and access tokens never leave this
 // module's callers on the server — nothing here is imported by client code.
 
-const HACKATIME_BASE_URL = process.env.HACKATIME_BASE_URL || 'https://hackatime.hackclub.com';
+const HACKATIME_BASE_URL = (process.env.HACKATIME_BASE_URL || 'https://hackatime.hackclub.com').trim();
 
+// Vercel's env var UI makes it very easy to end up with a trailing
+// newline/space in a pasted value (this bit us: the exact-match
+// redirect_uri check kept failing because of an invisible \n). Trim
+// defensively so that can never break the OAuth exact-match again.
 function requireEnv(name) {
-  const value = process.env[name];
+  const value = process.env[name]?.trim();
   if (!value) throw new Error(`${name} is not configured`);
   return value;
 }

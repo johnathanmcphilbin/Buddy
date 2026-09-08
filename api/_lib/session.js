@@ -15,7 +15,7 @@ const SESSION_COOKIE = 'buddy_session';
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 180; // 180 days
 
 function getSecret() {
-  const secret = process.env.SESSION_SECRET;
+  const secret = process.env.SESSION_SECRET?.trim();
   if (!secret) {
     throw new Error('SESSION_SECRET is not configured');
   }
