@@ -25,6 +25,7 @@ export default async function handler(req, res) {
     res.status(200).json({
       connected: true,
       username: profile.username,
+      email: session.hackatimeEmail ?? null,
       trustLevel: profile.trustLevel,
       // Hackatime's own anti-cheat system flags accounts red; treat that
       // as a hard block rather than inventing our own appeal process.

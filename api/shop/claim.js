@@ -8,13 +8,14 @@ const REVIEWER_EMAIL = process.env.REVIEWER_EMAIL?.trim() || 'johnathanmcphilbin
 
 // Claims are handled here rather than in the browser: the item id is
 // looked up server-side for its real price (never trusting a price sent
-// by the client), the current balance is recomputed from Airtable, and
-// only if that balance covers the price does the claim get written and
-// an email go out. Two claims landing at the exact same moment could
-// still both read the same starting balance before either write lands —
-// Airtable has no transaction primitive to prevent that — but that's a
-// narrow window for a single-reviewer flow, not a first-come-first-served
-// storefront under real concurrent load.
+// by the client), the current balance is recomputed from Airtable (matched
+// by email — see /api/hackatime/set-email), and only if that balance
+// covers the price does the claim get written and an email go out. Two
+// claims landing at the exact same moment could still both read the same
+// starting balance before either write lands — Airtable has no
+// transaction primitive to prevent that — but that's a narrow window for
+// a single-reviewer flow, not a first-come-first-served storefront under
+// real concurrent load.
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -27,6 +28,11 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (!session.hackatimeEmail) {
+    res.status(401).json({ error: 'Add your email on the Hackatime connect step first.' });
+    return;
+  }
+
   const itemId = req.body?.itemId;
   const item = getShopItem(itemId);
   if (!item) {
@@ -35,10 +41,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const profile = await getAuthenticatedProfile(session.hackatimeAccessToken);
-    const [entry, spent] = await Promise.all([
-      getLatestLedgerEntry(profile.username),
-      getTotalSpentBits(profile.username)
+    const [profile, entry, spent] = await Promise.all([
+      getAuthenticatedProfile(session.hackatimeAccessToken),
+      getLatestLedgerEntry(session.hackatimeEmail),
+      getTotalSpentBits(session.hackatimeEmail)
     ]);
 
     const approvedBits =
@@ -57,7 +63,7 @@ export default async function handler(req, res) {
 
     await createShopClaim({
       hackatimeUsername: profile.username,
-      email: req.body?.email || undefined,
+      email: session.hackatimeEmail,
       itemTitle: item.title,
       itemName: item.item,
       price: item.price
@@ -67,7 +73,7 @@ export default async function handler(req, res) {
       to: REVIEWER_EMAIL,
       subject: `Buddy shop claim: ${item.title}`,
       html: `
-        <p><strong>${profile.username}</strong> claimed <strong>${item.title}</strong> for ${item.price} Bits.</p>
+        <p><strong>${session.hackatimeEmail}</strong> (Hackatime: ${profile.username}) claimed <strong>${item.title}</strong> for ${item.price} Bits.</p>
         <p>You need to send them: <strong>${item.item}</strong></p>
         <p>New balance: ${balance - item.price} Bits.</p>
         <p>Mark it Fulfilled in the Buddy Shop Claims table once it's sent.</p>

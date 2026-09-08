@@ -1,10 +1,11 @@
 import { getSession } from '../_lib/session.js';
-import { getAuthenticatedProfile } from '../_lib/hackatime-server.js';
 import { getLatestLedgerEntry, getTotalSpentBits } from '../_lib/airtable.js';
 
 // Real Bit balance = earned (from the review ledger) minus spent (from
 // shop claims) — never calculated from raw Hackatime hours, and never
-// something the browser can adjust on its own.
+// something the browser can adjust on its own. Matched by email, since
+// that's set explicitly once (see /api/hackatime/set-email) and is what
+// participants actually recognize as their own identity.
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -17,11 +18,15 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (!session.hackatimeEmail) {
+    res.status(200).json({ status: 'No email set', approvedBits: 0, balance: 0 });
+    return;
+  }
+
   try {
-    const profile = await getAuthenticatedProfile(session.hackatimeAccessToken);
     const [entry, spent] = await Promise.all([
-      getLatestLedgerEntry(profile.username),
-      getTotalSpentBits(profile.username)
+      getLatestLedgerEntry(session.hackatimeEmail),
+      getTotalSpentBits(session.hackatimeEmail)
     ]);
 
     if (!entry) {

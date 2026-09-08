@@ -1,4 +1,4 @@
-import { getSession } from './_lib/session.js';
+import { getSession, setSession } from './_lib/session.js';
 import { getAuthenticatedProfile, getAuthenticatedProjects } from './_lib/hackatime-server.js';
 import { createYswsSubmission, createBitsLedgerEntry } from './_lib/airtable.js';
 import { sendReviewEmail } from './_lib/email.js';
@@ -123,6 +123,12 @@ export default async function handler(req, res) {
         <p>Open the Buddy Bits Ledger table in Airtable and set Status to Approved to award Bits (defaults to tracked hours — fill in Approved Bits there to award a different amount).</p>
       `
     });
+
+    // Make sure the email used on the form is the one bits/claims get
+    // matched against going forward, even if the connect step was skipped.
+    if (session.hackatimeEmail !== body.email) {
+      setSession(res, { ...session, hackatimeEmail: body.email });
+    }
 
     res.status(200).json({ submitted: true });
   } catch (error) {

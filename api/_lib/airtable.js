@@ -133,12 +133,12 @@ export async function createBitsLedgerEntry(entry) {
 
 // Looks up the most recent ledger entry for a participant so the site can
 // show their real status/approved Bits instead of a local guess. Matches
-// on Hackatime username since that's the one identity we can actually
-// verify (email is self-reported on the submission form).
-export async function getLatestLedgerEntry(hackatimeUsername) {
-  if (!hackatimeUsername) return null;
+// on email rather than Hackatime username — participants know their own
+// email, but most have no idea what their Hackatime username is.
+export async function getLatestLedgerEntry(email) {
+  if (!email) return null;
 
-  const filterFormula = `{Hackatime Username} = "${hackatimeUsername.replace(/"/g, '\\"')}"`;
+  const filterFormula = `LOWER({Submitter Email}) = "${email.toLowerCase().replace(/"/g, '\\"')}"`;
   const params = new URLSearchParams({
     filterByFormula: filterFormula,
     'sort[0][field]': 'Submitted At',
@@ -180,10 +180,10 @@ export async function createShopClaim(claim) {
 // Sum of every claim a participant has made so far, so the real balance
 // is (approved Bits) minus (everything they've spent) — never something
 // the browser can adjust on its own.
-export async function getTotalSpentBits(hackatimeUsername) {
-  if (!hackatimeUsername) return 0;
+export async function getTotalSpentBits(email) {
+  if (!email) return 0;
 
-  const filterFormula = `{Hackatime Username} = "${hackatimeUsername.replace(/"/g, '\\"')}"`;
+  const filterFormula = `LOWER({Submitter Email}) = "${email.toLowerCase().replace(/"/g, '\\"')}"`;
   const params = new URLSearchParams({ filterByFormula: filterFormula });
 
   let total = 0;
