@@ -159,16 +159,21 @@
   .hackatime-project-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    align-content: flex-start;
+    gap: 6px;
+    max-height: 190px;
+    overflow-y: auto;
+    padding: 2px;
+    width: 100%;
   }
 
   .hackatime-project {
     border: 2px solid var(--ink);
     border-radius: 999px;
     background: var(--white);
-    padding: 7px 14px;
+    padding: 5px 12px;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     cursor: var(--crosshair);
   }
 
