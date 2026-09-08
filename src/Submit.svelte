@@ -8,14 +8,28 @@
   let submitted = false;
   let errorMessage = '';
 
+  let codeUrl = '';
+  let playableUrl = '';
+  let howHeard = '';
+  let doingWell = '';
+  let howImprove = '';
   let firstName = '';
   let lastName = '';
   let email = '';
-  let githubUsername = '';
-  let githubUrl = '';
-  let demoVideoUrl = '';
-  let roboflowUrl = '';
+  let screenshotFile = null;
+  let screenshotName = '';
   let description = '';
+  let githubUsername = '';
+  let addressLine1 = '';
+  let addressLine2 = '';
+  let city = '';
+  let stateProvince = '';
+  let country = '';
+  let zip = '';
+  let birthday = '';
+  let roboflowUrl = '';
+
+  const MAX_SCREENSHOT_DIMENSION = 1600;
 
   onMount(async () => {
     try {
@@ -28,24 +42,76 @@
     }
   });
 
+  function handleScreenshotChange(event) {
+    screenshotFile = event.target.files?.[0] ?? null;
+    screenshotName = screenshotFile?.name ?? '';
+  }
+
+  // Resized client-side so a full-resolution phone photo doesn't blow
+  // past the request size limit on the way to the server.
+  function resizeImageToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read the screenshot file.'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('Could not read the screenshot file.'));
+        img.onload = () => {
+          const scale = Math.min(1, MAX_SCREENSHOT_DIMENSION / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          resolve(dataUrl.split(',')[1]);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     errorMessage = '';
     isSubmitting = true;
 
     try {
+      let screenshot = null;
+      if (screenshotFile) {
+        screenshot = {
+          base64: await resizeImageToBase64(screenshotFile),
+          contentType: 'image/jpeg',
+          filename: screenshotFile.name.replace(/\.[^.]+$/, '') + '.jpg'
+        };
+      }
+
       const response = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          codeUrl,
+          playableUrl,
+          howHeard,
+          doingWell,
+          howImprove,
           firstName,
           lastName,
           email,
+          screenshot,
+          description,
           githubUsername,
-          githubUrl,
-          demoVideoUrl,
-          roboflowUrl,
-          description
+          addressLine1,
+          addressLine2,
+          city,
+          stateProvince,
+          country,
+          zip,
+          birthday,
+          roboflowUrl
         })
       });
 
@@ -119,6 +185,36 @@
               </div>
             {:else}
               <form class="submit-form" on:submit={handleSubmit}>
+                <label class="submit-field">
+                  <span>Code URL</span>
+                  <input type="url" bind:value={codeUrl} placeholder="https://github.com/you/buddy" required disabled={isSubmitting} />
+                </label>
+
+                <label class="submit-field">
+                  <span>Playable URL</span>
+                  <input type="url" bind:value={playableUrl} placeholder="Link to your demo video or a live version" required disabled={isSubmitting} />
+                </label>
+
+                <label class="submit-field">
+                  <span>Roboflow project URL (optional)</span>
+                  <input type="url" bind:value={roboflowUrl} placeholder="https://app.roboflow.com/..." disabled={isSubmitting} />
+                </label>
+
+                <label class="submit-field">
+                  <span>How did you hear about this?</span>
+                  <input type="text" bind:value={howHeard} disabled={isSubmitting} />
+                </label>
+
+                <label class="submit-field">
+                  <span>What are we doing well?</span>
+                  <input type="text" bind:value={doingWell} disabled={isSubmitting} />
+                </label>
+
+                <label class="submit-field">
+                  <span>How can we improve?</span>
+                  <input type="text" bind:value={howImprove} disabled={isSubmitting} />
+                </label>
+
                 <div class="submit-field-row">
                   <label class="submit-field">
                     <span>First name</span>
@@ -135,30 +231,57 @@
                   <input type="email" bind:value={email} required disabled={isSubmitting} />
                 </label>
 
+                <label class="submit-field">
+                  <span>Screenshot (optional)</span>
+                  <input type="file" accept="image/*" on:change={handleScreenshotChange} disabled={isSubmitting} />
+                  {#if screenshotName}<span class="submit-field-hint">{screenshotName}</span>{/if}
+                </label>
+
+                <label class="submit-field">
+                  <span>Description</span>
+                  <textarea bind:value={description} rows="4" required disabled={isSubmitting}></textarea>
+                </label>
+
+                <label class="submit-field">
+                  <span>GitHub username</span>
+                  <input type="text" bind:value={githubUsername} required disabled={isSubmitting} />
+                </label>
+
+                <label class="submit-field">
+                  <span>Address (Line 1)</span>
+                  <input type="text" bind:value={addressLine1} required disabled={isSubmitting} />
+                </label>
+
+                <label class="submit-field">
+                  <span>Address (Line 2, optional)</span>
+                  <input type="text" bind:value={addressLine2} disabled={isSubmitting} />
+                </label>
+
                 <div class="submit-field-row">
                   <label class="submit-field">
-                    <span>GitHub username</span>
-                    <input type="text" bind:value={githubUsername} required disabled={isSubmitting} />
+                    <span>City</span>
+                    <input type="text" bind:value={city} required disabled={isSubmitting} />
                   </label>
                   <label class="submit-field">
-                    <span>GitHub URL</span>
-                    <input type="url" bind:value={githubUrl} placeholder="https://github.com/you/buddy" required disabled={isSubmitting} />
+                    <span>State / Province</span>
+                    <input type="text" bind:value={stateProvince} required disabled={isSubmitting} />
+                  </label>
+                </div>
+
+                <div class="submit-field-row">
+                  <label class="submit-field">
+                    <span>Country</span>
+                    <input type="text" bind:value={country} required disabled={isSubmitting} />
+                  </label>
+                  <label class="submit-field">
+                    <span>ZIP / Postal Code</span>
+                    <input type="text" bind:value={zip} required disabled={isSubmitting} />
                   </label>
                 </div>
 
                 <label class="submit-field">
-                  <span>Demo video URL</span>
-                  <input type="url" bind:value={demoVideoUrl} placeholder="https://youtube.com/..." required disabled={isSubmitting} />
-                </label>
-
-                <label class="submit-field">
-                  <span>Roboflow project URL (optional)</span>
-                  <input type="url" bind:value={roboflowUrl} placeholder="https://app.roboflow.com/..." disabled={isSubmitting} />
-                </label>
-
-                <label class="submit-field">
-                  <span>Short description</span>
-                  <textarea bind:value={description} rows="4" required disabled={isSubmitting}></textarea>
+                  <span>Birthday</span>
+                  <input type="date" bind:value={birthday} required disabled={isSubmitting} />
                 </label>
 
                 <button type="submit" class="button secondary-button" disabled={isSubmitting}>
@@ -305,6 +428,12 @@
   .submit-field textarea {
     min-height: 100px;
     resize: vertical;
+  }
+
+  .submit-field-hint {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
   }
 
   .submit-error {

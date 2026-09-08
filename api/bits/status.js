@@ -26,9 +26,20 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Approving just means flipping Status to "Approved" in Airtable — Bits
+    // default to the tracked hours at submission time (1 hour = 1 Bit,
+    // rounded), with no extra step needed. Filling in "Approved Bits"
+    // manually overrides that default for cases where fewer hours should count.
+    const approvedBits =
+      entry.status === 'Approved'
+        ? typeof entry.approvedBits === 'number'
+          ? entry.approvedBits
+          : Math.round(entry.trackedHours)
+        : 0;
+
     res.status(200).json({
       status: entry.status,
-      approvedBits: entry.status === 'Approved' ? entry.approvedBits ?? 0 : 0,
+      approvedBits,
       trackedHours: entry.trackedHours,
       reviewerNotes: entry.reviewerNotes
     });

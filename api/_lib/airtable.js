@@ -3,6 +3,7 @@
 // record shape. AIRTABLE_TOKEN is never imported by client code.
 
 const AIRTABLE_API_BASE = 'https://api.airtable.com/v0';
+const AIRTABLE_CONTENT_BASE = 'https://content.airtable.com/v0';
 
 const SUBMISSION_TABLE = 'YSWS Project Submission';
 const LEDGER_TABLE = 'Buddy Bits Ledger';
@@ -34,30 +35,80 @@ async function airtableRequest(path, options = {}) {
   return response.json();
 }
 
-// Writes into Hack Club's shared YSWS submission schema. Only fields we
-// actually collect are set — address/birthday/screenshot are left blank
-// rather than guessed, and the "Automation - Submit to Unified YSWS"
+// Writes into Hack Club's shared YSWS submission schema, matching every
+// field on the real form. The "Automation - Submit to Unified YSWS"
 // checkbox is intentionally never set here (that's a real external
 // pipeline trigger, not something to flip automatically on every submit).
 export async function createYswsSubmission(submission) {
   const fields = {
+    'Code URL': submission.codeUrl,
+    'Playable URL': submission.playableUrl,
+    'How did you hear about this?': submission.howHeard,
+    'What are we doing well?': submission.doingWell,
+    'How can we improve?': submission.howImprove,
     'First Name': submission.firstName,
     'Last Name': submission.lastName,
     Email: submission.email,
-    'GitHub Username': submission.githubUsername,
-    'Code URL': submission.githubUrl,
-    'Playable URL': submission.demoVideoUrl,
     Description: submission.description,
+    'GitHub Username': submission.githubUsername,
+    'Address (Line 1)': submission.addressLine1,
+    'Address (Line 2)': submission.addressLine2,
+    City: submission.city,
+    'State / Province': submission.stateProvince,
+    Country: submission.country,
+    'ZIP / Postal Code': submission.zip,
+    Birthday: submission.birthday,
     'Justification - Submitter Hackatime ID': submission.hackatimeUsername,
     'Justification - Hackatime Project Name(s) + Date Range(s)': submission.hackatimeProject
   };
+
+  // Drop empty optional fields rather than sending blank strings.
+  Object.keys(fields).forEach((key) => {
+    if (fields[key] === undefined || fields[key] === '') delete fields[key];
+  });
 
   const data = await airtableRequest(`${encodeURIComponent(SUBMISSION_TABLE)}`, {
     method: 'POST',
     body: JSON.stringify({ fields })
   });
 
+  if (submission.screenshot?.base64) {
+    // Best-effort: a failed screenshot upload should never block the
+    // actual submission from going through.
+    try {
+      await uploadScreenshot(data.id, submission.screenshot);
+    } catch (error) {
+      console.error('Screenshot upload failed:', error.message);
+    }
+  }
+
   return data.id;
+}
+
+async function uploadScreenshot(recordId, screenshot) {
+  const token = requireEnv('AIRTABLE_TOKEN');
+  const baseId = requireEnv('AIRTABLE_BASE_ID');
+
+  const response = await fetch(
+    `${AIRTABLE_CONTENT_BASE}/${baseId}/${recordId}/${encodeURIComponent('Screenshot')}/uploadAttachment`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contentType: screenshot.contentType,
+        file: screenshot.base64,
+        filename: screenshot.filename
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Screenshot upload failed (${response.status}): ${body}`);
+  }
 }
 
 export async function createBitsLedgerEntry(entry) {

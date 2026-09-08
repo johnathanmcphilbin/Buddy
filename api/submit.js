@@ -8,6 +8,22 @@ import { sendReviewEmail } from './_lib/email.js';
 // REVIEWER_EMAIL once that's sorted (e.g. johnny@hackclub.com).
 const REVIEWER_EMAIL = process.env.REVIEWER_EMAIL?.trim() || 'johnathanmcphilbin2@gmail.com';
 
+const REQUIRED_FIELDS = [
+  'codeUrl',
+  'playableUrl',
+  'firstName',
+  'lastName',
+  'email',
+  'description',
+  'githubUsername',
+  'addressLine1',
+  'city',
+  'stateProvince',
+  'country',
+  'zip',
+  'birthday'
+];
+
 function isValidUrl(value) {
   try {
     new URL(value);
@@ -29,24 +45,24 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { firstName, lastName, email, githubUsername, githubUrl, demoVideoUrl, roboflowUrl, description } = req.body ?? {};
-
-  if (!firstName || !lastName || !email || !githubUsername || !githubUrl || !demoVideoUrl || !description) {
-    res.status(400).json({ error: 'All fields are required.' });
+  const body = req.body ?? {};
+  const missing = REQUIRED_FIELDS.filter((field) => !body[field]);
+  if (missing.length > 0) {
+    res.status(400).json({ error: `Missing required fields: ${missing.join(', ')}` });
     return;
   }
 
-  if (!isValidUrl(githubUrl) || !isValidUrl(demoVideoUrl)) {
-    res.status(400).json({ error: 'GitHub URL and demo video URL must be valid URLs.' });
+  if (!isValidUrl(body.codeUrl) || !isValidUrl(body.playableUrl)) {
+    res.status(400).json({ error: 'Code URL and Playable URL must be valid URLs.' });
     return;
   }
 
-  if (roboflowUrl && !isValidUrl(roboflowUrl)) {
+  if (body.roboflowUrl && !isValidUrl(body.roboflowUrl)) {
     res.status(400).json({ error: 'Roboflow URL must be a valid URL.' });
     return;
   }
 
-  const fullDescription = roboflowUrl ? `${description}\n\nRoboflow project: ${roboflowUrl}` : description;
+  const fullDescription = body.roboflowUrl ? `${body.description}\n\nRoboflow project: ${body.roboflowUrl}` : body.description;
 
   try {
     // Fetch live from Hackatime rather than trusting anything cached in
@@ -61,19 +77,30 @@ export default async function handler(req, res) {
     const hackatimeUsername = profile.username ?? '';
 
     const submissionRecordId = await createYswsSubmission({
-      firstName,
-      lastName,
-      email,
-      githubUsername,
-      githubUrl,
-      demoVideoUrl,
+      codeUrl: body.codeUrl,
+      playableUrl: body.playableUrl,
+      howHeard: body.howHeard,
+      doingWell: body.doingWell,
+      howImprove: body.howImprove,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      email: body.email,
       description: fullDescription,
+      githubUsername: body.githubUsername,
+      addressLine1: body.addressLine1,
+      addressLine2: body.addressLine2,
+      city: body.city,
+      stateProvince: body.stateProvince,
+      country: body.country,
+      zip: body.zip,
+      birthday: body.birthday,
       hackatimeUsername,
-      hackatimeProject: session.hackatimeProject
+      hackatimeProject: session.hackatimeProject,
+      screenshot: body.screenshot
     });
 
     await createBitsLedgerEntry({
-      email,
+      email: body.email,
       hackatimeUsername,
       hackatimeProject: session.hackatimeProject,
       trackedHours,
@@ -82,18 +109,18 @@ export default async function handler(req, res) {
 
     await sendReviewEmail({
       to: REVIEWER_EMAIL,
-      subject: `Buddy submission: ${firstName} ${lastName}`,
+      subject: `Buddy submission: ${body.firstName} ${body.lastName}`,
       html: `
-        <p><strong>${firstName} ${lastName}</strong> (${email}) submitted a Buddy for review.</p>
+        <p><strong>${body.firstName} ${body.lastName}</strong> (${body.email}) submitted a Buddy for review.</p>
         <ul>
           <li>Hackatime project: ${session.hackatimeProject}</li>
           <li>Tracked hours at submission: ${trackedHours.toFixed(1)}</li>
-          <li>GitHub: <a href="${githubUrl}">${githubUrl}</a></li>
-          <li>Demo video: <a href="${demoVideoUrl}">${demoVideoUrl}</a></li>
-          ${roboflowUrl ? `<li>Roboflow: <a href="${roboflowUrl}">${roboflowUrl}</a></li>` : ''}
+          <li>Code URL: <a href="${body.codeUrl}">${body.codeUrl}</a></li>
+          <li>Playable URL: <a href="${body.playableUrl}">${body.playableUrl}</a></li>
+          ${body.roboflowUrl ? `<li>Roboflow: <a href="${body.roboflowUrl}">${body.roboflowUrl}</a></li>` : ''}
         </ul>
         <p>${fullDescription.replace(/\n/g, '<br />')}</p>
-        <p>Open the Buddy Bits Ledger table in Airtable to set Approved Bits and Status for this submission.</p>
+        <p>Open the Buddy Bits Ledger table in Airtable and set Status to Approved to award Bits (defaults to tracked hours — fill in Approved Bits there to award a different amount).</p>
       `
     });
 
