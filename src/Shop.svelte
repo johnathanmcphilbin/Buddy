@@ -144,7 +144,7 @@
     }
   ];
 
-  const hoursBuilt = 0;
+  let hoursBuilt = 0;
 
   let activeCategory = 'ALL';
   let selectedItem = null;
@@ -161,6 +161,9 @@
       hackatimeConnected = data.status !== 'Not connected';
       if (typeof data.balance === 'number') {
         bits.set(data.balance);
+      }
+      if (typeof data.trackedHours === 'number') {
+        hoursBuilt = data.trackedHours;
       }
     } catch {
       // Leave the locally stored balance as-is if the ledger can't be reached.
@@ -244,7 +247,7 @@
         <RoughFrame stroke="#26324d" fill="#fffdf6" seed={12} radius={22} roughness={2}>
           <span class="balance-label">YOUR BALANCE</span>
           <span class="balance-amount">{$bits} BITS</span>
-          <span class="balance-line">{hoursBuilt} hours built</span>
+          <span class="balance-line">{hoursBuilt.toFixed(1)} hours built</span>
         </RoughFrame>
       </div>
 
