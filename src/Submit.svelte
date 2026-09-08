@@ -1,5 +1,26 @@
 <script>
+  import { onMount } from 'svelte';
   import RoughFrame from './lib/RoughFrame.svelte';
+
+  const AIRTABLE_FORM_URL = 'https://airtable.com/embed/appaLihQJMPIKOV12/pagIUkO2i3lr1KlNc/form';
+
+  let status = { connected: false, project: null, hours: 0 };
+  let isLoading = true;
+
+  $: formSrc = status.connected && status.project
+    ? `${AIRTABLE_FORM_URL}?prefill_Hackatime+project=${encodeURIComponent(status.project)}`
+    : AIRTABLE_FORM_URL;
+
+  onMount(async () => {
+    try {
+      const response = await fetch('/api/hackatime/status');
+      status = await response.json();
+    } catch {
+      // Hackatime status just won't show — the form below still works standalone.
+    } finally {
+      isLoading = false;
+    }
+  });
 </script>
 
 <header class="site-header">
@@ -23,6 +44,23 @@
       <p class="eyebrow">SUBMIT BUDDY</p>
       <h1>Submit your Buddy.</h1>
       <p class="submit-subhead">A working live webcam demo, your Roboflow project or dataset, and a short video showing Buddy detecting multiple objects and speaking different responses based on what it sees.</p>
+
+      {#if !isLoading}
+        <div class="submit-hackatime">
+          <RoughFrame stroke="#338eda" fill="#fffdf6" seed={31} radius={18} roughness={1.8}>
+            <div class="submit-hackatime-inner">
+              {#if status.connected && status.project}
+                <span class="submit-hackatime-label">YOUR HACKATIME</span>
+                <span class="submit-hackatime-project">{status.project}</span>
+                <span class="submit-hackatime-hours">{status.hours.toFixed(1)} hours tracked</span>
+              {:else}
+                <span class="submit-hackatime-label">HACKATIME NOT CONNECTED</span>
+                <a class="submit-hackatime-link" href="/#hackatime">Connect Hackatime first →</a>
+              {/if}
+            </div>
+          </RoughFrame>
+        </div>
+      {/if}
     </div>
   </section>
 
@@ -33,7 +71,7 @@
           <div class="submit-form-inner">
             <iframe
               class="airtable-embed"
-              src="https://airtable.com/embed/appaLihQJMPIKOV12/pagIUkO2i3lr1KlNc/form"
+              src={formSrc}
               title="Submit your Buddy"
               loading="lazy"
             ></iframe>
@@ -84,6 +122,47 @@
     font-size: 1.05rem;
     line-height: 1.55;
     font-weight: 500;
+  }
+
+  .submit-hackatime {
+    margin-top: 6px;
+    width: fit-content;
+  }
+
+  .submit-hackatime-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .submit-hackatime-label {
+    font-weight: 800;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .submit-hackatime-project {
+    font-family: 'Kalam', cursive;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .submit-hackatime-hours {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--blue);
+  }
+
+  .submit-hackatime-link {
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
   }
 
   .submit-form-section {
