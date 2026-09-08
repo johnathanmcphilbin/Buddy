@@ -160,6 +160,7 @@
   </a>
   <nav aria-label="Primary">
     <a href="/">Back to Buddy</a>
+    <a href="/submit.html">Submit</a>
   </nav>
 </header>
 

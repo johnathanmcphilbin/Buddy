@@ -9,6 +9,7 @@
   import StepArrow from './lib/StepArrow.svelte';
   import WorkedExample from './lib/WorkedExample.svelte';
   import BuddyLevel from './lib/BuddyLevel.svelte';
+  import HackatimeConnect from './lib/HackatimeConnect.svelte';
 
   const brandColors = ['#ec3750', '#ff8c37', '#f1c40f', '#33d6a6', '#338eda', '#a633d6'];
 
@@ -160,6 +161,7 @@
     <a href="#showcase">Ideas</a>
     <a href="#faq">FAQ</a>
     <a href="/shop.html">Shop</a>
+    <a href="/submit.html">Submit</a>
   </nav>
   <a class="age-pill" href="/shop.html">
     <RoughFrame variant="brackets" stroke="#ec3750" seed={12} inset={4} bracketLength={18}>
@@ -278,6 +280,8 @@
       </div>
     </div>
   </section>
+
+  <HackatimeConnect />
 
   <BuddyLevel />
 

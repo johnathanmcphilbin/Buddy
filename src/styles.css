@@ -20,17 +20,6 @@
   cursor: var(--crosshair);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #14151a;
-    --paper-soft: #1c1e26;
-    --white: #ffffff;
-    --ink: #e8e9ee;
-    --muted: #9a9cab;
-    --shadow: rgba(0, 0, 0, 0.5);
-  }
-}
-
 * {
   box-sizing: border-box;
   cursor: inherit;
