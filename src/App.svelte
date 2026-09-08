@@ -349,32 +349,7 @@
 
 <footer class="site-footer">
   <div class="section-shell footer-layout">
-    <div class="footer-brand">
-      <img src="/images/hackclub-flag.svg" alt="Hack Club" />
-      <h2>Buddy</h2>
-      <p>[HACK CLUB BRANDING LINE]</p>
-    </div>
-
-    <div class="footer-links">
-      <div>
-        <h3>[FOOTER GROUP]</h3>
-        <a href="#how">[FOOTER LINK]</a>
-        <a href="#example">[FOOTER LINK]</a>
-      </div>
-      <div>
-        <h3>[FOOTER GROUP]</h3>
-        <a href="#showcase">[FOOTER LINK]</a>
-        <a href="#faq">[FOOTER LINK]</a>
-      </div>
-      <div>
-        <h3>[FOOTER GROUP]</h3>
-        <a href="https://hackclub.com">[FOOTER LINK]</a>
-        <a href="https://blueprint.hackclub.com">[FOOTER LINK]</a>
-      </div>
-    </div>
-
-    <div class="footer-mascot">
-      <Mascot state="idle" size={128} />
-    </div>
+    <a href="https://hackclub.com">Hack Club</a>
+    <a href="https://hackclub.com/privacy-and-terms">Privacy &amp; Terms</a>
   </div>
 </footer>
