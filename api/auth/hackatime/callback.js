@@ -4,7 +4,17 @@ import { readOAuthState, clearOAuthState, getSession, setSession } from '../../_
 // Where to send the browser back to after connecting. Same site, no
 // server-rendered pages to redirect into — the frontend reads its own
 // connection status from /api/hackatime/status on load.
-const RETURN_PATH = '/#hackatime';
+//
+// The query string must come before the #hash, not after — anything
+// after # is a URL fragment, not a real query param, so a browser never
+// sees `?hackatime_error=...` if it's tacked on after the hash.
+const RETURN_HASH = '#hackatime';
+
+function redirectTo(res, errorMessage) {
+  const query = errorMessage ? `?hackatime_error=${encodeURIComponent(errorMessage)}` : '';
+  res.writeHead(302, { Location: `/${query}${RETURN_HASH}` });
+  res.end();
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -15,8 +25,7 @@ export default async function handler(req, res) {
   const { code, state, error: oauthError } = req.query;
 
   if (oauthError) {
-    res.writeHead(302, { Location: `${RETURN_PATH}?hackatime_error=${encodeURIComponent(oauthError)}` });
-    res.end();
+    redirectTo(res, String(oauthError));
     return;
   }
 
@@ -24,8 +33,7 @@ export default async function handler(req, res) {
   clearOAuthState(res);
 
   if (!code || !state || !expectedState || state !== expectedState) {
-    res.writeHead(302, { Location: `${RETURN_PATH}?hackatime_error=invalid_state` });
-    res.end();
+    redirectTo(res, 'invalid_state');
     return;
   }
 
@@ -35,10 +43,8 @@ export default async function handler(req, res) {
     const session = getSession(req);
     setSession(res, { ...session, hackatimeAccessToken: accessToken, hackatimeProject: null });
 
-    res.writeHead(302, { Location: RETURN_PATH });
-    res.end();
+    redirectTo(res, null);
   } catch (error) {
-    res.writeHead(302, { Location: `${RETURN_PATH}?hackatime_error=${encodeURIComponent(error.message)}` });
-    res.end();
+    redirectTo(res, error.message);
   }
 }

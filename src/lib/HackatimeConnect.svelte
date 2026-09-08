@@ -22,7 +22,7 @@
     const params = new URLSearchParams(window.location.search);
     const oauthError = params.get('hackatime_error');
     if (oauthError) {
-      errorMessage = 'Could not connect Hackatime. Try again.';
+      errorMessage = `Could not connect Hackatime: ${oauthError}`;
       params.delete('hackatime_error');
       const cleanUrl = window.location.pathname + (params.toString() ? `?${params}` : '') + window.location.hash;
       window.history.replaceState({}, '', cleanUrl);
