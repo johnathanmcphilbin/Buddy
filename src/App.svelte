@@ -351,5 +351,6 @@
   <div class="section-shell footer-layout">
     <a href="https://hackclub.com">Hack Club</a>
     <a href="https://hackclub.com/privacy-and-terms">Privacy &amp; Terms</a>
+    <a href="https://github.com/johnathanmcphilbin/Buddy" target="_blank" rel="noopener">GitHub</a>
   </div>
 </footer>
