@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/auth/hackclub/callback", "destination": "/api/auth/hackatime/callback" },
+    { "source": "/auth/hackatime/login", "destination": "/api/auth/hackatime/login" },
+    { "source": "/auth/hackatime/callback", "destination": "/api/auth/hackatime/callback" },
+    { "source": "/auth/hackatime/logout", "destination": "/api/auth/hackatime/logout" }
+  ]
+}
