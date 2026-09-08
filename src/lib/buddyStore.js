@@ -2,7 +2,7 @@ import { writable, derived } from 'svelte/store';
 
 const BITS_KEY = 'buddy-bits';
 const UPGRADES_KEY = 'buddy-upgrades';
-const DEFAULT_BITS = 7;
+const DEFAULT_BITS = 0;
 
 function loadBits() {
   if (typeof localStorage === 'undefined') return DEFAULT_BITS;

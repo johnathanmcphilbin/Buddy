@@ -2,25 +2,63 @@
   import { onMount } from 'svelte';
   import RoughFrame from './lib/RoughFrame.svelte';
 
-  const AIRTABLE_FORM_URL = 'https://airtable.com/embed/appaLihQJMPIKOV12/pagIUkO2i3lr1KlNc/form';
-
   let status = { connected: false, project: null, hours: 0 };
   let isLoading = true;
+  let isSubmitting = false;
+  let submitted = false;
+  let errorMessage = '';
 
-  $: formSrc = status.connected && status.project
-    ? `${AIRTABLE_FORM_URL}?prefill_Hackatime+project=${encodeURIComponent(status.project)}`
-    : AIRTABLE_FORM_URL;
+  let firstName = '';
+  let lastName = '';
+  let email = '';
+  let githubUsername = '';
+  let githubUrl = '';
+  let demoVideoUrl = '';
+  let roboflowUrl = '';
+  let description = '';
 
   onMount(async () => {
     try {
       const response = await fetch('/api/hackatime/status');
       status = await response.json();
     } catch {
-      // Hackatime status just won't show — the form below still works standalone.
+      // Hackatime status just won't show — the form below still requires it before submitting.
     } finally {
       isLoading = false;
     }
   });
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    errorMessage = '';
+    isSubmitting = true;
+
+    try {
+      const response = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          githubUsername,
+          githubUrl,
+          demoVideoUrl,
+          roboflowUrl,
+          description
+        })
+      });
+
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || 'Could not submit right now.');
+
+      submitted = true;
+    } catch (error) {
+      errorMessage = error.message;
+    } finally {
+      isSubmitting = false;
+    }
+  }
 </script>
 
 <header class="site-header">
@@ -69,19 +107,72 @@
       <div class="submit-form-frame">
         <RoughFrame stroke="#33d6a6" fill="#fffdf6" seed={64} radius={26} roughness={2}>
           <div class="submit-form-inner">
-            <iframe
-              class="airtable-embed"
-              src={formSrc}
-              title="Submit your Buddy"
-              loading="lazy"
-            ></iframe>
+            {#if submitted}
+              <div class="submit-success">
+                <span class="scribble">SUBMITTED</span>
+                <p>Your Buddy is in for review. You'll see the status on this page once it's checked.</p>
+              </div>
+            {:else if !status.connected || !status.project}
+              <div class="submit-locked">
+                <p>Connect Hackatime and pick your Buddy project before you can submit.</p>
+                <a class="button secondary-button" href="/#hackatime">Connect Hackatime</a>
+              </div>
+            {:else}
+              <form class="submit-form" on:submit={handleSubmit}>
+                <div class="submit-field-row">
+                  <label class="submit-field">
+                    <span>First name</span>
+                    <input type="text" bind:value={firstName} required disabled={isSubmitting} />
+                  </label>
+                  <label class="submit-field">
+                    <span>Last name</span>
+                    <input type="text" bind:value={lastName} required disabled={isSubmitting} />
+                  </label>
+                </div>
+
+                <label class="submit-field">
+                  <span>Email</span>
+                  <input type="email" bind:value={email} required disabled={isSubmitting} />
+                </label>
+
+                <div class="submit-field-row">
+                  <label class="submit-field">
+                    <span>GitHub username</span>
+                    <input type="text" bind:value={githubUsername} required disabled={isSubmitting} />
+                  </label>
+                  <label class="submit-field">
+                    <span>GitHub URL</span>
+                    <input type="url" bind:value={githubUrl} placeholder="https://github.com/you/buddy" required disabled={isSubmitting} />
+                  </label>
+                </div>
+
+                <label class="submit-field">
+                  <span>Demo video URL</span>
+                  <input type="url" bind:value={demoVideoUrl} placeholder="https://youtube.com/..." required disabled={isSubmitting} />
+                </label>
+
+                <label class="submit-field">
+                  <span>Roboflow project URL (optional)</span>
+                  <input type="url" bind:value={roboflowUrl} placeholder="https://app.roboflow.com/..." disabled={isSubmitting} />
+                </label>
+
+                <label class="submit-field">
+                  <span>Short description</span>
+                  <textarea bind:value={description} rows="4" required disabled={isSubmitting}></textarea>
+                </label>
+
+                <button type="submit" class="button secondary-button" disabled={isSubmitting}>
+                  {isSubmitting ? 'Submitting…' : 'Submit Buddy'}
+                </button>
+
+                {#if errorMessage}
+                  <p class="submit-error">{errorMessage}</p>
+                {/if}
+              </form>
+            {/if}
           </div>
         </RoughFrame>
       </div>
-      <p class="submit-fallback">
-        Having trouble with the form?
-        <a href="https://airtable.com/appaLihQJMPIKOV12/pagIUkO2i3lr1KlNc/form" target="_blank" rel="noopener">Open it in a new tab</a>.
-      </p>
     </div>
   </section>
 </main>
@@ -175,29 +266,79 @@
 
   .submit-form-inner {
     border-radius: 18px;
-    overflow: hidden;
     background: var(--white);
+    padding: clamp(20px, 4vw, 36px);
   }
 
-  .airtable-embed {
-    display: block;
-    width: 100%;
-    height: min(1100px, 90vh);
-    border: none;
+  .submit-form {
+    display: grid;
+    gap: 16px;
+    max-width: 560px;
   }
 
-  .submit-fallback {
-    margin-top: 14px;
+  .submit-field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .submit-field {
+    display: grid;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 0.88rem;
+  }
+
+  .submit-field input,
+  .submit-field textarea {
+    min-height: 46px;
+    padding: 10px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .submit-field textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  .submit-error {
+    color: var(--red);
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  .submit-locked {
+    display: grid;
+    gap: 14px;
+    justify-items: start;
+    max-width: 420px;
+  }
+
+  .submit-locked p {
     color: var(--muted);
-    font-size: 0.92rem;
     font-weight: 500;
   }
 
-  .submit-fallback a {
-    color: var(--ink);
-    font-weight: 700;
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 3px;
+  .submit-success {
+    display: grid;
+    gap: 10px;
+    justify-items: start;
+  }
+
+  .submit-success .scribble {
+    font-size: 1.6rem;
+    color: var(--green);
+  }
+
+  .submit-success p {
+    color: var(--muted);
+    font-weight: 500;
+    max-width: 420px;
   }
 </style>

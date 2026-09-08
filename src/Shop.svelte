@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import RoughFrame from './lib/RoughFrame.svelte';
   import { bits, buddyLevel, purchaseUpgrade } from './lib/buddyStore.js';
 
@@ -131,10 +132,27 @@
     }
   ];
 
-  const hoursBuilt = 7;
+  const hoursBuilt = 0;
 
   let activeCategory = 'ALL';
   let selectedItem = null;
+
+  // The real Bit balance comes from Airtable's review ledger (approved
+  // submissions only), not from local demo state. This overrides the
+  // stored default the first time it's known; purchases still deduct
+  // locally from there for now, since server-side spend tracking is a
+  // separate follow-up.
+  onMount(async () => {
+    try {
+      const response = await fetch('/api/bits/status');
+      const data = await response.json();
+      if (typeof data.approvedBits === 'number') {
+        bits.set(data.approvedBits);
+      }
+    } catch {
+      // Leave the locally stored balance as-is if the ledger can't be reached.
+    }
+  });
 
   $: visibleBranches = branches.filter((branch) => activeCategory === 'ALL' || branch.key === activeCategory);
 
