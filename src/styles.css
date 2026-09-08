@@ -89,6 +89,16 @@ svg {
   height: auto;
 }
 
+.hackclub-flag-link {
+  display: flex;
+  align-items: center;
+}
+
+.brand-lockup .hackclub-flag {
+  width: 52px;
+  height: auto;
+}
+
 .brand-lockup span {
   font-weight: 800;
   font-size: clamp(1.05rem, 2vw, 1.3rem);
@@ -172,8 +182,8 @@ h1 {
 }
 
 h2 {
-  font-size: clamp(2.5rem, 5.8vw, 5.4rem);
-  line-height: 0.92;
+  font-size: clamp(2rem, 3.6vw, 3.1rem);
+  line-height: 1.08;
   font-weight: 800;
 }
 
@@ -208,7 +218,27 @@ h3 {
   font-weight: 800;
   color: var(--white);
   background: var(--red);
-  box-shadow: 0 8px 0 #b8293f;
+  --shadow: #b8293f;
+  box-shadow: 0 8px 0 var(--shadow);
+  cursor: var(--crosshair);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 0 var(--shadow);
+  filter: brightness(1.05);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 var(--shadow);
+  filter: brightness(0.97);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
 }
 
 .button:disabled {
@@ -232,12 +262,14 @@ h3 {
 
 .secondary-button {
   background: var(--blue);
-  box-shadow: 0 8px 0 #21649c;
+  --shadow: #21649c;
+  box-shadow: 0 8px 0 var(--shadow);
 }
 
 .quiet-button {
   background: var(--purple);
-  box-shadow: 0 8px 0 #79209d;
+  --shadow: #79209d;
+  box-shadow: 0 8px 0 var(--shadow);
 }
 
 .hook-card {
@@ -266,9 +298,23 @@ h3 {
   font-weight: 700;
 }
 
+.hero-visual {
+  position: relative;
+}
+
 .hero-visual .rough-frame-content {
   min-height: min(64vw, 520px);
   padding: clamp(24px, 5vw, 54px);
+}
+
+.hero-buddy-badge {
+  position: absolute;
+  right: clamp(-18px, -3vw, -10px);
+  bottom: clamp(-18px, -3vw, -10px);
+  width: clamp(72px, 10vw, 108px);
+  height: clamp(72px, 10vw, 108px);
+  filter: drop-shadow(0 6px 0 rgba(38, 50, 77, 0.14));
+  transform: rotate(-6deg);
 }
 
 .hero-stage {
@@ -282,6 +328,14 @@ h3 {
     radial-gradient(circle at 16px 16px, rgba(51, 142, 218, 0.12) 2px, transparent 2px),
     var(--paper-soft);
   background-size: 34px 34px;
+}
+
+.hero-stage-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brand-bursts {
@@ -304,7 +358,7 @@ h3 {
 
 .section-heading {
   display: grid;
-  gap: 14px;
+  gap: 16px;
   margin-bottom: clamp(34px, 6vw, 64px);
 }
 
@@ -502,6 +556,21 @@ h3 {
   transform: rotate(-1.5deg);
 }
 
+.shop-teaser-tracking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.shop-teaser-tracking-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 .shop-teaser-cta {
   margin-top: 14px;
   min-height: 48px;
@@ -609,6 +678,243 @@ h3 {
 
   .shop-teaser-diagram {
     height: clamp(320px, 70vw, 420px);
+  }
+}
+
+.buddy-level-section {
+  padding-top: clamp(48px, 6vw, 76px);
+  padding-bottom: clamp(48px, 6vw, 76px);
+}
+
+.level-heading {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.level-base-card {
+  margin: 22px auto 0;
+  width: fit-content;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 22px;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  background: var(--paper-soft);
+}
+
+.level-base-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.level-base-title {
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.level-base-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.level-diagram {
+  position: relative;
+  width: min(100%, 720px);
+  height: clamp(320px, 34vw, 420px);
+  margin: 30px auto 0;
+}
+
+.level-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.level-buddy {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.level-tag {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--muted);
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+}
+
+.level-tag.active {
+  color: var(--ink);
+  opacity: 1;
+  background: var(--white);
+}
+
+.level-tag-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.level-tag-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.level-tag-label {
+  font-weight: 800;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+}
+
+.level-tag-1 {
+  left: 0;
+  top: 6%;
+  transform: rotate(-3deg);
+}
+
+.level-tag-2 {
+  left: 25%;
+  top: 0;
+  transform: rotate(2deg);
+}
+
+.level-tag-3 {
+  right: 25%;
+  top: 0;
+  transform: rotate(-2deg);
+}
+
+.level-tag-4 {
+  right: 0;
+  top: 6%;
+  transform: rotate(3deg);
+}
+
+.level-tag-5 {
+  left: 0;
+  top: 48%;
+  transform: rotate(-2deg);
+}
+
+.level-tag-6 {
+  right: 0;
+  top: 48%;
+  transform: rotate(2deg);
+}
+
+.level-tag-7 {
+  left: 2%;
+  bottom: 4%;
+  transform: rotate(3deg);
+}
+
+.level-tag-8 {
+  left: 27%;
+  bottom: 0;
+  transform: rotate(-3deg);
+}
+
+.level-tag-9 {
+  right: 27%;
+  bottom: 0;
+  transform: rotate(2deg);
+}
+
+.level-tag-10 {
+  right: 2%;
+  bottom: 4%;
+  transform: rotate(-2deg);
+}
+
+.level-status {
+  margin: 36px auto 0;
+  max-width: 560px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.level-status-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.level-status-value {
+  font-size: clamp(1.8rem, 3.4vw, 2.4rem);
+  font-weight: 800;
+  color: var(--red);
+  line-height: 1;
+}
+
+.level-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.level-badge {
+  border: 2px solid rgba(38, 50, 77, 0.3);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.level-badge.active {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.level-cta {
+  margin-top: 8px;
+  min-height: 46px;
+  padding: 10px 22px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .level-diagram {
+    height: auto;
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+  }
+
+  .level-lines {
+    display: none;
+  }
+
+  .level-buddy {
+    position: static;
+    transform: none;
+  }
+
+  .level-tag {
+    position: static;
+    transform: none;
   }
 }
 
@@ -959,21 +1265,11 @@ h3 {
   height: var(--mascot-size);
 }
 
-.mascot lottie-player {
+.mascot-image {
+  display: block;
   width: var(--mascot-size);
   height: var(--mascot-size);
-}
-
-.eye-motion {
-  position: absolute;
-  left: 50%;
-  top: 43%;
-  width: calc(var(--mascot-size) * 0.1);
-  height: calc(var(--mascot-size) * 0.1);
-  border-radius: 50%;
-  background: rgba(51, 142, 218, 0.24);
-  box-shadow: 0 0 0 5px rgba(51, 142, 218, 0.08);
-  pointer-events: none;
+  object-fit: contain;
 }
 
 .mascot figcaption {
@@ -1028,6 +1324,10 @@ h3 {
 
   .brand-lockup img {
     width: 32px;
+  }
+
+  .brand-lockup .hackclub-flag {
+    width: 42px;
   }
 
   .age-pill {

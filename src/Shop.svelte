@@ -1,5 +1,6 @@
 <script>
   import RoughFrame from './lib/RoughFrame.svelte';
+  import { bits, buddyLevel, purchaseUpgrade } from './lib/buddyStore.js';
 
   const categories = ['ALL', 'EYES', 'BRAIN', 'VOICE', 'WORLD'];
 
@@ -14,14 +15,24 @@
           item: 'Logitech C270 Webcam',
           price: 8,
           reason: 'Point Buddy somewhere your laptop can’t.',
-          build: 'Point Buddy at your desk, doorway, shelf, or anywhere your laptop can’t.'
+          build: 'Point Buddy at your desk, doorway, shelf, or anywhere your laptop can’t.',
+          group: 'better-eyes'
         },
         {
           title: 'Better Lighting',
           item: 'USB Desk Light',
           price: 6,
           reason: 'Give Buddy cleaner training photos and more reliable detections.',
-          build: 'Make your detector work better in messy rooms or darker spaces.'
+          build: 'Make your detector work better in messy rooms or darker spaces.',
+          group: null
+        },
+        {
+          title: 'Give Buddy Better Vision',
+          item: 'Roboflow Credits',
+          price: 2,
+          reason: 'Train more, test more, and keep improving your detector.',
+          build: 'Train more versions of your detector and compare what works best.',
+          group: 'better-vision'
         }
       ]
     },
@@ -35,28 +46,32 @@
           item: '$10 AI Credit Grant',
           price: 2,
           reason: 'Replace fixed responses with generated ones.',
-          build: 'Let Buddy come up with its own responses instead of using fixed sentences.'
+          build: 'Let Buddy come up with its own responses instead of using fixed sentences.',
+          group: 'brain'
         },
         {
           title: 'Give Buddy a Bigger Brain',
           item: '$25 AI Credit Grant',
           price: 5,
           reason: 'Take Buddy further with generated responses and smarter behavior.',
-          build: 'Add more personality, better responses, or more advanced assistant behavior.'
+          build: 'Add more personality, better responses, or more advanced assistant behavior.',
+          group: 'brain'
         },
         {
-          title: 'More Training Power',
-          item: 'Roboflow Credits',
-          price: 2,
-          reason: 'Train more, test more, and keep improving your detector.',
-          build: 'Train more versions of your detector and compare what works best.'
+          title: 'Give Buddy a Memory',
+          item: 'Database / Storage Credit Grant',
+          price: 3,
+          reason: 'Let Buddy remember what happened earlier instead of only reacting to the current frame.',
+          build: 'Make Buddy remember routines, past detections, or what you usually forget.',
+          group: 'memory'
         },
         {
-          title: 'Take Buddy Further',
+          title: 'Train Buddy Properly',
           item: 'Roboflow Core',
           price: 20,
           reason: 'For when you want to seriously keep building the vision side.',
-          build: 'Push the vision side further with more serious training and testing.'
+          build: 'Push the vision side further with more serious training and testing.',
+          group: 'training-power'
         }
       ]
     },
@@ -70,7 +85,16 @@
           item: 'USB Microphone',
           price: 7,
           reason: 'Let Buddy react to what it hears as well as what it sees.',
-          build: 'Build a Buddy that listens for commands while also watching what is happening.'
+          build: 'Build a Buddy that listens for commands while also watching what is happening.',
+          group: 'ears'
+        },
+        {
+          title: 'Give Buddy a Voice',
+          item: 'ElevenLabs Voice Creator',
+          price: 3,
+          reason: 'Create a custom voice that sounds exactly how you want your Buddy to sound.',
+          build: 'Give Buddy its own personality with a voice you designed just for it.',
+          group: 'custom-voice'
         }
       ]
     },
@@ -84,7 +108,24 @@
           item: '$25 Hardware Grant',
           price: 5,
           reason: 'Buy LEDs, servos, buttons, displays, or whatever lets Buddy affect the real world.',
-          build: 'Make Buddy light something up, move something, or control something physical.'
+          build: 'Make Buddy light something up, move something, or control something physical.',
+          group: 'body'
+        },
+        {
+          title: 'Give Buddy a Face',
+          item: 'Small Display Grant',
+          price: 8,
+          reason: 'Put Buddy’s status, expressions, or responses on a physical screen.',
+          build: 'Give Buddy a little face that changes depending on what it sees.',
+          group: 'face'
+        },
+        {
+          title: 'Give Buddy More Senses',
+          item: 'Sensor Hardware Grant',
+          price: 5,
+          reason: 'Add things like light, distance, temperature, or motion sensing.',
+          build: 'Make Buddy react to the room, not just what the camera sees.',
+          group: 'more-senses'
         }
       ]
     }
@@ -92,7 +133,6 @@
 
   const hoursBuilt = 7;
 
-  let bits = 7;
   let activeCategory = 'ALL';
   let selectedItem = null;
 
@@ -108,9 +148,7 @@
 
   function confirmClaim() {
     if (!selectedItem) return;
-    if (bits >= selectedItem.price) {
-      bits -= selectedItem.price;
-    }
+    purchaseUpgrade(selectedItem.price, selectedItem.group);
     selectedItem = null;
   }
 </script>
@@ -133,13 +171,19 @@
       <p class="shop-subhead">Every hour you build earns you 1 Bit. Spend your Bits on things that make Buddy see, think, hear, and do more.</p>
 
       <p class="shop-rate">1 HOUR = 1 BIT</p>
+      <p class="shop-tracking">Tracked with Lapse and Hackatime.</p>
 
       <div class="balance-readout">
         <RoughFrame stroke="#26324d" fill="#fffdf6" seed={12} radius={22} roughness={2}>
           <span class="balance-label">YOUR BALANCE</span>
-          <span class="balance-amount">{bits} BITS</span>
+          <span class="balance-amount">{$bits} BITS</span>
           <span class="balance-line">{hoursBuilt} hours built</span>
         </RoughFrame>
+      </div>
+
+      <div class="level-indicator">
+        <span class="level-indicator-label">BUDDY LEVEL</span>
+        <span class="level-indicator-value">LEVEL {$buddyLevel}</span>
       </div>
 
       <nav class="category-nav" aria-label="Shop categories">
@@ -247,11 +291,11 @@
   <div class="modal-backdrop" role="presentation" on:click={closeModal}>
     <div class="modal-panel" role="dialog" aria-modal="true" on:click|stopPropagation>
       <RoughFrame stroke="#26324d" fill="#fffdf6" seed={77} radius={24} roughness={1.9}>
-        {#if bits >= selectedItem.price}
+        {#if $bits >= selectedItem.price}
           <div class="modal-inner">
             <h3>Spend {selectedItem.price} Bits?</h3>
-            <p>This will use {selectedItem.price} of your {bits} earned Bits.</p>
-            <p>You’ll have {bits - selectedItem.price} Bits left.</p>
+            <p>This will use {selectedItem.price} of your {$bits} earned Bits.</p>
+            <p>You’ll have {$bits - selectedItem.price} Bits left.</p>
             <div class="modal-actions">
               <button type="button" class="button quiet-button" on:click={closeModal}>NEVER MIND</button>
               <button type="button" class="button secondary-button" on:click={confirmClaim}>CLAIM UPGRADE</button>
@@ -308,6 +352,12 @@
     color: var(--ink);
   }
 
+  .shop-tracking {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
   .balance-readout {
     margin-top: 8px;
     width: min(100%, 300px);
@@ -338,6 +388,27 @@
     font-size: 0.92rem;
     font-weight: 600;
     color: var(--muted);
+  }
+
+  .level-indicator {
+    margin-top: 4px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .level-indicator-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .level-indicator-value {
+    font-family: 'Kalam', cursive;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--ink);
   }
 
   .category-nav {
@@ -479,7 +550,8 @@
     min-height: 44px;
     padding: 10px 20px;
     background: var(--accent);
-    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+    --shadow: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 0 var(--shadow);
     font-size: 0.88rem;
   }
 

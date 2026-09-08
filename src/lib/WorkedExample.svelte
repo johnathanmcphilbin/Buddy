@@ -4,10 +4,8 @@
   import RoughFrame from './RoughFrame.svelte';
 
   const CLASS_COLORS = {
-    KEYS: '#ec3750',
-    PHONE: '#ff8c37',
-    WALLET: '#33d6a6',
-    BAG: '#338eda'
+    KEYBOARD: '#ff8c37',
+    MOUSE: '#33d6a6'
   };
 
   const ALLOWED_CLASSES = Object.keys(CLASS_COLORS);
@@ -15,32 +13,32 @@
   const STABLE_MS = 1000;
 
   const RESPONSES = {
-    'KEYS,PHONE,WALLET,BAG': 'You’ve got everything. You’re good to go.',
-    'KEYS,PHONE,BAG': 'You’ve got your keys, phone, and bag. You’re still missing your wallet.',
-    'KEYS,PHONE': 'You’ve got your keys and phone, but you’re missing your wallet and bag.',
-    'PHONE,WALLET': 'You’ve got your phone and wallet. You probably want your keys too.',
-    'KEYS': 'You’ve got your keys. That is not enough.',
-    '': 'You appear to have prepared absolutely nothing.'
+    'KEYBOARD,MOUSE': 'You’ve got everything. Your desk is ready.',
+    'KEYBOARD': 'You’ve got your keyboard. That is not enough.',
+    'MOUSE': 'You’ve got your mouse. That is not enough.',
+    '': 'Your desk is completely empty.'
   };
 
-  // Roboflow hosted inference is not connected yet. Fill these in and
-  // swap the body of runFrameInference() with a real call when a
-  // trained model is ready. Detection state, drawing, and speech below
-  // all work off whatever runFrameInference() returns, so nothing else
-  // needs to change.
   const ROBOFLOW_CONFIG = {
-    modelEndpoint: '',
-    apiKey: ''
+    // Roboflow's workflow endpoint doesn't send CORS headers on its
+    // preflight response, so browsers block calling it directly. This
+    // relative path is proxied to the real endpoint (see vite.config.js
+    // for local dev; the production host needs an equivalent proxy/function).
+    workflowUrl: '/api/roboflow',
+    apiKey: 'szXTZuJgiRiFkpwoN7eQ'
   };
+
+  const INFERENCE_INTERVAL_MS = 500;
 
   let video;
   let canvas;
+  let frameCanvas;
   let cameraWrap;
   let resizeObserver;
 
   let stream;
   let model;
-  let rafId;
+  let loopTimer;
   let stableTimer;
 
   let isRunning = false;
@@ -80,26 +78,82 @@
   // --- model loading --------------------------------------------------
 
   async function loadModel() {
-    // Placeholder until a trained Roboflow model is connected. Returning
-    // null keeps the demo honest: no detections are drawn or spoken for
-    // until a real model is wired up here.
-    return null;
+    // The Roboflow workflow is a stateless HTTP endpoint, so "loading"
+    // just means the config we need to call it is ready.
+    if (!ROBOFLOW_CONFIG.workflowUrl || !ROBOFLOW_CONFIG.apiKey) return null;
+    return ROBOFLOW_CONFIG;
   }
 
   // --- frame inference --------------------------------------------------
 
+  function captureFrameAsBase64(videoEl) {
+    if (!videoEl?.videoWidth || !videoEl?.videoHeight) return null;
+
+    frameCanvas = frameCanvas || document.createElement('canvas');
+    frameCanvas.width = videoEl.videoWidth;
+    frameCanvas.height = videoEl.videoHeight;
+
+    const ctx = frameCanvas.getContext('2d');
+    ctx.drawImage(videoEl, 0, 0, frameCanvas.width, frameCanvas.height);
+
+    return frameCanvas.toDataURL('image/jpeg', 0.8).split(',')[1] ?? null;
+  }
+
+  // Roboflow workflow output shapes vary by workflow config, so this
+  // walks the response looking for the first array of detection-shaped
+  // objects instead of hardcoding one exact path.
+  function findPredictionsArray(node, depth = 0) {
+    if (!node || depth > 6) return null;
+
+    if (Array.isArray(node)) {
+      const looksLikeDetections = node.every(
+        (entry) => entry && typeof entry === 'object' && ('confidence' in entry) && ('class' in entry || 'class_name' in entry || 'label' in entry)
+      );
+      if (node.length > 0 && looksLikeDetections) return node;
+
+      for (const entry of node) {
+        const found = findPredictionsArray(entry, depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    if (typeof node === 'object') {
+      for (const key of Object.keys(node)) {
+        const found = findPredictionsArray(node[key], depth + 1);
+        if (found) return found;
+      }
+    }
+
+    return null;
+  }
+
   async function runFrameInference(activeModel, videoEl) {
     if (!activeModel) return [];
 
-    // Example of what this looks like once a Roboflow model is connected:
-    // const response = await fetch(
-    //   `${ROBOFLOW_CONFIG.modelEndpoint}?api_key=${ROBOFLOW_CONFIG.apiKey}`,
-    //   { method: 'POST', body: frameToBlob(videoEl) }
-    // );
-    // const { predictions } = await response.json();
-    // return predictions;
+    const base64Image = captureFrameAsBase64(videoEl);
+    if (!base64Image) return [];
 
-    return [];
+    try {
+      const response = await fetch(activeModel.workflowUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          api_key: activeModel.apiKey,
+          inputs: {
+            image: { type: 'base64', value: base64Image }
+          }
+        })
+      });
+
+      if (!response.ok) return [];
+
+      const data = await response.json();
+      return findPredictionsArray(data) ?? [];
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
   }
 
   // --- detection state --------------------------------------------------
@@ -108,7 +162,7 @@
     const bestByClass = new Map();
 
     rawPredictions.forEach((prediction) => {
-      const label = String(prediction.class ?? prediction.label ?? '').toUpperCase();
+      const label = String(prediction.class ?? prediction.class_name ?? prediction.label ?? '').toUpperCase();
       const score = prediction.confidence ?? prediction.score ?? 0;
 
       if (!ALLOWED_CLASSES.includes(label)) return;
@@ -116,14 +170,14 @@
 
       const existing = bestByClass.get(label);
       if (!existing || score > existing.score) {
-        bestByClass.set(label, {
-          label,
-          score,
-          x: prediction.x ?? prediction.bbox?.[0] ?? 0,
-          y: prediction.y ?? prediction.bbox?.[1] ?? 0,
-          width: prediction.width ?? prediction.bbox?.[2] ?? 0,
-          height: prediction.height ?? prediction.bbox?.[3] ?? 0
-        });
+        // Roboflow reports x/y as the box center; bbox arrays (if ever
+        // present) are already top-left, so only convert the former.
+        const width = prediction.width ?? prediction.bbox?.[2] ?? 0;
+        const height = prediction.height ?? prediction.bbox?.[3] ?? 0;
+        const x = prediction.bbox ? prediction.bbox[0] : (prediction.x ?? 0) - width / 2;
+        const y = prediction.bbox ? prediction.bbox[1] : (prediction.y ?? 0) - height / 2;
+
+        bestByClass.set(label, { label, score, x, y, width, height });
       }
     });
 
@@ -239,11 +293,13 @@
     if (stopRequested || !isRunning) return;
 
     const rawPredictions = await runFrameInference(model, video);
+    if (stopRequested || !isRunning) return;
+
     detections = updateDetectionState(rawPredictions);
     drawBoundingBoxes(detections);
     handleComboStability(getComboKey(detections));
 
-    rafId = requestAnimationFrame(frameLoop);
+    loopTimer = setTimeout(frameLoop, INFERENCE_INTERVAL_MS);
   }
 
   async function startDemo() {
@@ -286,7 +342,7 @@
     lastSpokenComboKey = null;
 
     clearTimeout(stableTimer);
-    cancelAnimationFrame(rafId);
+    clearTimeout(loopTimer);
     window.speechSynthesis?.cancel();
     resizeObserver?.disconnect();
     clearCanvas();
@@ -302,8 +358,8 @@
   <div class="section-shell worked-layout">
     <div class="worked-copy">
       <p class="eyebrow">TRY A BUDDY</p>
-      <h2>Are you ready to leave?</h2>
-      <p class="section-lede">This Buddy checks for the stuff you usually forget before you walk out the door.</p>
+      <h2>Is your desk ready to work?</h2>
+      <p class="section-lede">This Buddy checks your desk for your keyboard and mouse before you sit down to work.</p>
       <div class="example-actions">
         <button class="button secondary-button" on:click={startDemo} disabled={isLoading || isRunning}>
           {isLoading ? '[LOADING]' : 'Start camera'}

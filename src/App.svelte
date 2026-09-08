@@ -8,6 +8,7 @@
   import BuildVisual from './lib/BuildVisual.svelte';
   import StepArrow from './lib/StepArrow.svelte';
   import WorkedExample from './lib/WorkedExample.svelte';
+  import BuddyLevel from './lib/BuddyLevel.svelte';
 
   const brandColors = ['#ec3750', '#ff8c37', '#f1c40f', '#33d6a6', '#338eda', '#a633d6'];
 
@@ -79,7 +80,44 @@
     }
   ];
 
-  const faqs = Array.from({ length: 8 }, (_, index) => index);
+  const faqs = [
+    {
+      question: 'Do I need to know machine learning?',
+      answer: 'No. You’ll use Roboflow to train the detector, and we’ll give you starter code for the webcam, model loading, and bounding boxes. The main thing you’re building is the logic that makes Buddy understand what it sees and decide what to say.'
+    },
+    {
+      question: 'Do I have to train my own model?',
+      answer: 'Yes. Your detector has to be trained on photos you collected and labelled yourself. No stock datasets and no wrapping a general vision API around your project.'
+    },
+    {
+      question: 'What does a finished Buddy need to do?',
+      answer: 'Your Buddy needs to detect multiple objects at once, react differently to combinations or counts of those objects, and speak a response out loud based on what it currently sees.'
+    },
+    {
+      question: 'How many responses does Buddy need?',
+      answer: 'At least 6 distinct spoken outcomes. They should depend on different combinations, missing objects, or counts, not just one object being present.'
+    },
+    {
+      question: 'How long should this take?',
+      answer: 'Around 4 to 5 hours for the base Buddy. You can keep building after that to earn more Bits and upgrade it further.'
+    },
+    {
+      question: 'What are Bits?',
+      answer: 'Every hour you work earns you 1 Bit. One Bit represents $5 of reward value, and you can spend your Bits in the Buddy Shop on upgrades like AI credits, a webcam, a custom voice, hardware, and more.'
+    },
+    {
+      question: 'How do I track my hours?',
+      answer: 'Use Lapse or Hackatime to track the time you spend building Buddy. Your logged hours are what convert into Bits, so keep it running while you work.'
+    },
+    {
+      question: 'Do I need an LLM or paid AI API?',
+      answer: 'No. The normal Buddy uses rules you write yourself. AI generated responses are an optional upgrade if you want to take it further.'
+    },
+    {
+      question: 'What do I submit?',
+      answer: 'A working live webcam demo, your Roboflow project or dataset, and a short video showing Buddy detecting multiple objects and speaking different responses based on what it sees.'
+    }
+  ];
   let openFaq = 0;
   let heroCta;
 
@@ -108,10 +146,14 @@
 </svelte:head>
 
 <header class="site-header">
-  <a class="brand-lockup" href="#top" aria-label="Buddy">
-    <img src="https://assets.hackclub.com/flag-orpheus-top.svg" alt="Hack Club" />
-    <span>Buddy</span>
-  </a>
+  <div class="brand-lockup">
+    <a class="hackclub-flag-link" href="https://hackclub.com" target="_blank" rel="noopener" aria-label="Hack Club">
+      <img class="hackclub-flag" src="https://assets.hackclub.com/flag-orpheus-top.svg" alt="Hack Club" />
+    </a>
+    <a href="#top" aria-label="Buddy">
+      <span>Buddy</span>
+    </a>
+  </div>
   <nav aria-label="Primary">
     <a href="#how">How it works</a>
     <a href="#example">Try a Buddy</a>
@@ -136,7 +178,7 @@
 
         <div class="cta-wrap" bind:this={heroCta}>
           <a class="button hero-button" href="#example" on:mouseenter={bounceCta} on:focus={bounceCta}>
-            <span>See demo ->></span>
+            <span>See demo</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 12h12" />
               <path d="m13 6 6 6-6 6" />
@@ -155,14 +197,10 @@
       <div class="hero-visual">
         <RoughFrame stroke="#ff8c37" fill="#fffdf6" seed={19} radius={34} roughness={2.4}>
           <div class="hero-stage">
-            <div class="brand-bursts" aria-hidden="true">
-              {#each brandColors as color, index}
-                <span style={`--burst:${color};--i:${index}`}></span>
-              {/each}
-            </div>
-            <Mascot state="confused" size={236} />
+            <img class="hero-stage-image" src="/images/demo.png" alt="Example Buddy detection with objects boxed and labeled" />
           </div>
         </RoughFrame>
+        <img class="hero-buddy-badge" src="/images/buddy.png" alt="Buddy" />
       </div>
     </div>
   </section>
@@ -204,6 +242,10 @@
         <h2>Build more. Upgrade your Buddy.</h2>
         <p class="section-lede">Every hour you work earns you 1 Bit. Spend your Bits on things that help you take Buddy further, like a better webcam, AI credits, a microphone, Roboflow credits, or hardware.</p>
         <p class="shop-teaser-rate">1 HOUR = 1 BIT</p>
+        <p class="shop-teaser-tracking">
+          <img class="shop-teaser-tracking-icon" src="/images/buddy.png" alt="" aria-hidden="true" />
+          Tracked with Lapse and Hackatime.
+        </p>
         <a class="button secondary-button shop-teaser-cta" href="/shop.html">Visit the shop →</a>
       </div>
 
@@ -236,6 +278,8 @@
       </div>
     </div>
   </section>
+
+  <BuddyLevel />
 
   <WorkedExample />
 
@@ -274,26 +318,26 @@
   <section class="section faq-section" id="faq">
     <div class="section-shell faq-layout">
       <div class="section-heading faq-heading">
-        <p class="eyebrow">[FAQ LABEL]</p>
-        <h2>[FAQ HEADLINE]</h2>
+        <p class="eyebrow">FAQ</p>
+        <h2>Before you start.</h2>
       </div>
 
       <div class="faq-list">
-        {#each faqs as faq}
+        {#each faqs as faq, index}
           <div class="faq-item">
             <button
               class="faq-question"
-              aria-expanded={openFaq === faq}
-              aria-controls={`faq-${faq}`}
-              on:click={() => (openFaq = openFaq === faq ? -1 : faq)}
+              aria-expanded={openFaq === index}
+              aria-controls={`faq-${index}`}
+              on:click={() => (openFaq = openFaq === index ? -1 : index)}
             >
-              <span>[FAQ QUESTION]</span>
-              <span class="faq-icon" aria-hidden="true">{openFaq === faq ? '-' : '+'}</span>
+              <span>{faq.question}</span>
+              <span class="faq-icon" aria-hidden="true">{openFaq === index ? '-' : '+'}</span>
             </button>
-            <RoughDivider height={18} colors={[brandColors[faq % brandColors.length], brandColors[(faq + 2) % brandColors.length]]} />
-            {#if openFaq === faq}
-              <div class="faq-answer" id={`faq-${faq}`}>
-                <p>[FAQ ANSWER]</p>
+            <RoughDivider height={18} colors={[brandColors[index % brandColors.length], brandColors[(index + 2) % brandColors.length]]} />
+            {#if openFaq === index}
+              <div class="faq-answer" id={`faq-${index}`}>
+                <p>{faq.answer}</p>
               </div>
             {/if}
           </div>
