@@ -164,7 +164,7 @@
 <style>
   .hackatime-widget {
     width: min(100%, 400px);
-    margin: 0 auto 28px;
+    margin: 0;
   }
 
   .hackatime-widget-heading {

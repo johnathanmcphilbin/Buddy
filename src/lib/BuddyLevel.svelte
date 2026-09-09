@@ -69,34 +69,38 @@
 
 <section class="section buddy-level-section" id="buddy-level">
   <div class="section-shell">
-    <div class="level-heading">
-      <p class="eyebrow">BUDDY LEVEL</p>
-      <h2>How upgraded is your Buddy?</h2>
-      <p class="section-lede">Every Buddy starts at Level 1 once it can see, understand, and talk. Every upgrade you add after that pushes it up another level.</p>
-      <p class="section-lede level-lede-note">Upgrades cost Bits, and Bits come from hours you submit and get approved. <a href="/submit.html">Submit your build</a> to earn Bits, then spend them in the <a href="/shop.html">shop</a>.</p>
-    </div>
+    <div class="level-top-layout">
+      <div class="level-intro-col">
+        <div class="level-heading">
+          <p class="eyebrow">BUDDY LEVEL</p>
+          <h2>How upgraded is your Buddy?</h2>
+          <p class="section-lede">Every Buddy starts at Level 1 once it can see, understand, and talk. Every upgrade you add after that pushes it up another level.</p>
+          <p class="section-lede level-lede-note">Upgrades cost Bits, and Bits come from hours you submit and get approved. <a href="/submit.html">Submit your build</a> to earn Bits, then spend them in the <a href="/shop.html">shop</a>.</p>
+        </div>
 
-    <HackatimeConnect />
-
-    <div class="level-base-card">
-      <span class="level-base-tag">LEVEL 1</span>
-      <span class="level-base-title">BASE BUDDY</span>
-      <p class="level-base-desc">Sees. Understands. Talks.</p>
-      <a class="level-tutorial-link" href="/docs/buddy-level-1-tutorial.pdf" download>Download the Level 1 build guide (PDF) →</a>
-    </div>
-
-    <div class="level-diagram" bind:this={diagramEl}>
-      <svg class="level-lines" viewBox={`0 0 ${viewW} ${viewH}`} aria-hidden="true">
-        {#each upgrades as upgrade, index (upgrade.id)}
-          <path d={linePaths[index]} fill="none" stroke={upgrade.accent} stroke-width="1.5" stroke-linecap="round" />
-        {/each}
-      </svg>
-
-      <div class="level-buddy" bind:this={buddyEl}>
-        <Mascot state="idle" size={116} />
+        <HackatimeConnect />
       </div>
 
-      {#each upgrades as upgrade, index (upgrade.id)}
+      <div class="level-diagram-col">
+        <div class="level-base-card">
+          <span class="level-base-tag">LEVEL 1</span>
+          <span class="level-base-title">BASE BUDDY</span>
+          <p class="level-base-desc">Sees. Understands. Talks.</p>
+          <a class="level-tutorial-link" href="/docs/buddy-level-1-tutorial.pdf" download>Download the Level 1 build guide (PDF) →</a>
+        </div>
+
+        <div class="level-diagram" bind:this={diagramEl}>
+        <svg class="level-lines" viewBox={`0 0 ${viewW} ${viewH}`} aria-hidden="true">
+          {#each upgrades as upgrade, index (upgrade.id)}
+            <path d={linePaths[index]} fill="none" stroke={upgrade.accent} stroke-width="1.5" stroke-linecap="round" />
+          {/each}
+        </svg>
+
+        <div class="level-buddy" bind:this={buddyEl}>
+          <Mascot state="idle" size={116} />
+        </div>
+
+        {#each upgrades as upgrade, index (upgrade.id)}
         <div
           class={`level-tag level-tag-${index + 1}`}
           class:active={$purchasedUpgrades.includes(upgrade.id)}
@@ -168,6 +172,8 @@
           <span class="level-tag-label">{upgrade.label}</span>
         </div>
       {/each}
+        </div>
+      </div>
     </div>
 
     <div class="level-status">
