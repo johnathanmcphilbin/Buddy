@@ -14,8 +14,8 @@ export default function handler(req, res) {
     return;
   }
 
-  const email = req.body?.email?.trim();
-  if (!email || !EMAIL_PATTERN.test(email)) {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+  if (!email || !EMAIL_PATTERN.test(email) || email.length > 254) {
     res.status(400).json({ error: 'Enter a valid email address.' });
     return;
   }

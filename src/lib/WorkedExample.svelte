@@ -20,12 +20,8 @@
   };
 
   const ROBOFLOW_CONFIG = {
-    // Roboflow's workflow endpoint doesn't send CORS headers on its
-    // preflight response, so browsers block calling it directly. This
-    // relative path is proxied to the real endpoint (see vite.config.js
-    // for local dev; the production host needs an equivalent proxy/function).
-    workflowUrl: '/api/roboflow',
-    apiKey: 'szXTZuJgiRiFkpwoN7eQ'
+    // Both local development and production call the server-only handler.
+    workflowUrl: '/api/roboflow'
   };
 
   const INFERENCE_INTERVAL_MS = 500;
@@ -80,7 +76,7 @@
   async function loadModel() {
     // The Roboflow workflow is a stateless HTTP endpoint, so "loading"
     // just means the config we need to call it is ready.
-    if (!ROBOFLOW_CONFIG.workflowUrl || !ROBOFLOW_CONFIG.apiKey) return null;
+    if (!ROBOFLOW_CONFIG.workflowUrl) return null;
     return ROBOFLOW_CONFIG;
   }
 
@@ -139,7 +135,6 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          api_key: activeModel.apiKey,
           inputs: {
             image: { type: 'base64', value: base64Image }
           }

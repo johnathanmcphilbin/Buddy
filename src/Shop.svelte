@@ -158,6 +158,7 @@
     try {
       const response = await fetch('/api/bits/status');
       const data = await response.json();
+      if (!response.ok) throw new Error('Balance unavailable');
       hackatimeConnected = data.status !== 'Not connected';
       if (typeof data.balance === 'number') {
         bits.set(data.balance);
@@ -166,7 +167,8 @@
         hoursBuilt = data.trackedHours;
       }
     } catch {
-      // Leave the locally stored balance as-is if the ledger can't be reached.
+      bits.set(0);
+      hackatimeConnected = false;
     }
   }
 
@@ -189,7 +191,7 @@
   }
 
   async function confirmClaim() {
-    if (!selectedItem) return;
+    if (!selectedItem || isClaiming) return;
 
     isClaiming = true;
     claimError = '';

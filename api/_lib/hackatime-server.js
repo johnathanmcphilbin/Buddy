@@ -97,12 +97,17 @@ export async function getAuthenticatedProjects(accessToken) {
     });
 }
 
-// Normalized profile shape: { username, trustLevel, isAdmin }
+// OAuth profile identity: immutable accountId plus display username and trust level.
 export async function getAuthenticatedProfile(accessToken) {
   const data = await authenticatedGet('/api/v1/authenticated/me', accessToken);
 
+  if (!Number.isSafeInteger(data.id) || data.id <= 0) {
+    throw new Error('Hackatime profile is missing its account identity');
+  }
+
   return {
-    username: data.username ?? null,
+    accountId: String(data.id),
+    username: data.username ?? data.github_username ?? String(data.id),
     displayName: data.display_name ?? null,
     trustLevel: data.trust_factor?.trust_level ?? null,
     isAdmin: Boolean(data.is_admin)

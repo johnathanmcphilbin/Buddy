@@ -1,32 +1,33 @@
+import { getAuthenticatedProfile } from '../_lib/hackatime-server.js';
+import { availableBits } from '../_lib/balance.js';
 import { getSession } from '../_lib/session.js';
 import { getLatestLedgerEntry, getTotalSpentBits } from '../_lib/airtable.js';
 
-// Real Bit balance = earned (from the review ledger) minus spent (from
-// shop claims) — never calculated from raw Hackatime hours, and never
-// something the browser can adjust on its own. Matched by email, since
-// that's set explicitly once (see /api/hackatime/set-email) and is what
-// participants actually recognize as their own identity.
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
+  res.setHeader('Cache-Control', 'no-store');
   const session = getSession(req);
   if (!session.hackatimeAccessToken) {
     res.status(200).json({ status: 'Not connected', approvedBits: 0, balance: 0 });
     return;
   }
 
-  if (!session.hackatimeEmail) {
-    res.status(200).json({ status: 'No email set', approvedBits: 0, balance: 0 });
-    return;
-  }
-
   try {
+    if (process.env.BITS_ACCOUNT_IDS_MIGRATED !== 'true') {
+      return res.status(503).json({ error: 'Balances are temporarily unavailable during account verification.', balance: 0 });
+    }
+    const profile = await getAuthenticatedProfile(session.hackatimeAccessToken);
+    if (profile.trustLevel === 'red') {
+      res.status(403).json({ error: 'This account cannot earn or spend Bits.', balance: 0 });
+      return;
+    }
     const [entry, spent] = await Promise.all([
-      getLatestLedgerEntry(session.hackatimeEmail),
-      getTotalSpentBits(session.hackatimeEmail)
+      getLatestLedgerEntry(profile.accountId),
+      getTotalSpentBits(profile.accountId)
     ]);
 
     if (!entry) {
@@ -38,22 +39,17 @@ export default async function handler(req, res) {
     // default to the tracked hours at submission time (1 hour = 1 Bit,
     // rounded), with no extra step needed. Filling in "Approved Bits"
     // manually overrides that default for cases where fewer hours should count.
-    const approvedBits =
-      entry.status === 'Approved'
-        ? typeof entry.approvedBits === 'number'
-          ? entry.approvedBits
-          : Math.round(entry.trackedHours)
-        : 0;
+    const approvedBits = availableBits(entry, 0);
 
     res.status(200).json({
       status: entry.status,
       approvedBits,
       spentBits: spent,
-      balance: Math.max(0, approvedBits - spent),
+      balance: availableBits(entry, spent),
       trackedHours: entry.trackedHours,
       reviewerNotes: entry.reviewerNotes
     });
   } catch (error) {
-    res.status(502).json({ error: error.message });
+    res.status(502).json({ error: 'Could not load your balance.', balance: 0 });
   }
 }

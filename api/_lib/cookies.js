@@ -12,7 +12,9 @@ export function parseCookies(req) {
     if (index === -1) return;
     const key = pair.slice(0, index).trim();
     const value = pair.slice(index + 1).trim();
-    if (key) cookies[key] = decodeURIComponent(value);
+    if (key) {
+      try { cookies[key] = decodeURIComponent(value); } catch { /* Ignore malformed cookies. */ }
+    }
   });
 
   return cookies;

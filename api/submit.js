@@ -1,3 +1,4 @@
+import { escapeHtml } from './_lib/html.js';
 import { getSession, setSession } from './_lib/session.js';
 import { getAuthenticatedProfile, getAuthenticatedProjects } from './_lib/hackatime-server.js';
 import { createYswsSubmission, createBitsLedgerEntry } from './_lib/airtable.js';
@@ -26,8 +27,7 @@ const REQUIRED_FIELDS = [
 
 function isValidUrl(value) {
   try {
-    new URL(value);
-    return true;
+    return ['https:', 'http:'].includes(new URL(value).protocol);
   } catch {
     return false;
   }
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
   }
 
   const body = req.body ?? {};
-  const missing = REQUIRED_FIELDS.filter((field) => !body[field]);
+  const missing = REQUIRED_FIELDS.filter((field) => typeof body[field] !== 'string' || !body[field].trim() || body[field].length > 10000);
   if (missing.length > 0) {
     res.status(400).json({ error: `Missing required fields: ${missing.join(', ')}` });
     return;
@@ -72,8 +72,16 @@ export default async function handler(req, res) {
       getAuthenticatedProjects(session.hackatimeAccessToken)
     ]);
 
+    if (profile.trustLevel === 'red') {
+      res.status(403).json({ error: 'This account cannot earn or spend Bits.' });
+      return;
+    }
     const selectedProject = projects.find((project) => project.name === session.hackatimeProject);
-    const trackedHours = selectedProject ? selectedProject.hours : 0;
+    if (!selectedProject || !Number.isFinite(selectedProject.hours) || selectedProject.hours < 0) {
+      res.status(400).json({ error: 'Select a valid Hackatime project before submitting.' });
+      return;
+    }
+    const trackedHours = selectedProject.hours;
     const hackatimeUsername = profile.username ?? '';
 
     const submissionRecordId = await createYswsSubmission({
@@ -100,6 +108,7 @@ export default async function handler(req, res) {
     });
 
     await createBitsLedgerEntry({
+      accountId: profile.accountId,
       email: body.email,
       hackatimeUsername,
       hackatimeProject: session.hackatimeProject,
@@ -111,27 +120,26 @@ export default async function handler(req, res) {
       to: REVIEWER_EMAIL,
       subject: `Buddy submission: ${body.firstName} ${body.lastName}`,
       html: `
-        <p><strong>${body.firstName} ${body.lastName}</strong> (${body.email}) submitted a Buddy for review.</p>
+        <p><strong>${escapeHtml(body.firstName)} ${escapeHtml(body.lastName)}</strong> (${escapeHtml(body.email)}) submitted a Buddy for review.</p>
         <ul>
-          <li>Hackatime project: ${session.hackatimeProject}</li>
+          <li>Hackatime project: ${escapeHtml(session.hackatimeProject)}</li>
           <li>Tracked hours at submission: ${trackedHours.toFixed(1)}</li>
-          <li>Code URL: <a href="${body.codeUrl}">${body.codeUrl}</a></li>
-          <li>Playable URL: <a href="${body.playableUrl}">${body.playableUrl}</a></li>
-          ${body.roboflowUrl ? `<li>Roboflow: <a href="${body.roboflowUrl}">${body.roboflowUrl}</a></li>` : ''}
+          <li>Code URL: <a href="${escapeHtml(body.codeUrl)}">${escapeHtml(body.codeUrl)}</a></li>
+          <li>Playable URL: <a href="${escapeHtml(body.playableUrl)}">${escapeHtml(body.playableUrl)}</a></li>
+          ${body.roboflowUrl ? `<li>Roboflow: <a href="${escapeHtml(body.roboflowUrl)}">${escapeHtml(body.roboflowUrl)}</a></li>` : ''}
         </ul>
-        <p>${fullDescription.replace(/\n/g, '<br />')}</p>
+        <p>${escapeHtml(fullDescription).replace(/\n/g, '<br />')}</p>
         <p>Open the Buddy Bits Ledger table in Airtable and set Status to Approved to award Bits (defaults to tracked hours — fill in Approved Bits there to award a different amount).</p>
       `
     });
 
-    // Make sure the email used on the form is the one bits/claims get
-    // matched against going forward, even if the connect step was skipped.
+    // Email is only a contact address; authenticated account owns the balance.
     if (session.hackatimeEmail !== body.email) {
       setSession(res, { ...session, hackatimeEmail: body.email });
     }
 
     res.status(200).json({ submitted: true });
   } catch (error) {
-    res.status(502).json({ error: error.message });
+    res.status(502).json({ error: 'Submission could not be completed. Please contact the organizer before retrying.' });
   }
 }

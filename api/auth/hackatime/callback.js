@@ -1,5 +1,5 @@
 import { exchangeCodeForToken } from '../../_lib/hackatime-server.js';
-import { readOAuthState, clearOAuthState, getSession, setSession } from '../../_lib/session.js';
+import { readOAuthState, clearOAuthState, setSession } from '../../_lib/session.js';
 
 // Where to send the browser back to after connecting. Same site, no
 // server-rendered pages to redirect into — the frontend reads its own
@@ -40,8 +40,7 @@ export default async function handler(req, res) {
   try {
     const accessToken = await exchangeCodeForToken(code);
 
-    const session = getSession(req);
-    setSession(res, { ...session, hackatimeAccessToken: accessToken, hackatimeProject: null });
+    setSession(res, { hackatimeAccessToken: accessToken, hackatimeProject: null });
 
     redirectTo(res, null);
   } catch (error) {

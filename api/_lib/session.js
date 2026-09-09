@@ -1,69 +1,41 @@
-// Signed, HttpOnly cookie session. There's no persistent server/database
-// here (Vercel functions are stateless between invocations), so the
-// Hackatime access token and selected project live in the cookie itself,
-// signed with SESSION_SECRET so the browser can't forge or tamper with
-// it. The cookie is HttpOnly + Secure (in production) + SameSite=Lax, so
-// page JavaScript never sees the access token — only server routes do.
-//
-// Hackatime access tokens are long-lived (per Hack Club's own
-// integration notes, ~16 years), so there is no refresh-token flow here.
-
-import { createHmac, timingSafeEqual } from 'node:crypto';
+// Authenticated encryption keeps access tokens confidential and rejects tampered,
+// expired, and legacy sessions. Deployment requires participants to reconnect.
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { parseCookies, serializeCookie, appendSetCookie } from './cookies.js';
 
 const SESSION_COOKIE = 'buddy_session';
-const MAX_AGE_SECONDS = 60 * 60 * 24 * 180; // 180 days
+const MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
-function getSecret() {
+function getKey() {
   const secret = process.env.SESSION_SECRET?.trim();
-  if (!secret) {
-    throw new Error('SESSION_SECRET is not configured');
-  }
-  return secret;
-}
-
-function sign(payload) {
-  return createHmac('sha256', getSecret()).update(payload).digest('base64url');
-}
-
-function encode(data) {
-  const payload = Buffer.from(JSON.stringify(data), 'utf8').toString('base64url');
-  const signature = sign(payload);
-  return `${payload}.${signature}`;
-}
-
-function decode(token) {
-  if (!token) return null;
-
-  const [payload, signature] = token.split('.');
-  if (!payload || !signature) return null;
-
-  const expected = sign(payload);
-
-  const a = Buffer.from(signature);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-
-  try {
-    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-  } catch {
-    return null;
-  }
+  if (!secret || secret.length < 32 || secret.startsWith('change_me')) throw new Error('A strong SESSION_SECRET is required');
+  return createHash('sha256').update(secret).digest();
 }
 
 export function getSession(req) {
-  const cookies = parseCookies(req);
-  return decode(cookies[SESSION_COOKIE]) ?? {};
+  try {
+    const token = parseCookies(req)[SESSION_COOKIE];
+    if (!token) return {};
+    const [version, iv, tag, payload, extra] = token.split('.');
+    if (version !== 'v2' || !iv || !tag || !payload || extra !== undefined) return {};
+    const decipher = createDecipheriv('aes-256-gcm', getKey(), Buffer.from(iv, 'base64url'));
+    decipher.setAuthTag(Buffer.from(tag, 'base64url'));
+    const data = JSON.parse(Buffer.concat([decipher.update(Buffer.from(payload, 'base64url')), decipher.final()]).toString('utf8'));
+    if (!Number.isFinite(data.expiresAt) || data.expiresAt <= Date.now()) return {};
+    return data;
+  } catch { return {}; }
 }
 
 export function setSession(res, data) {
-  const cookie = serializeCookie(SESSION_COOKIE, encode(data), { maxAge: MAX_AGE_SECONDS });
-  appendSetCookie(res, cookie);
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', getKey(), iv);
+  const payload = Buffer.concat([cipher.update(JSON.stringify({ ...data, expiresAt: Date.now() + MAX_AGE_SECONDS * 1000 }), 'utf8'), cipher.final()]);
+  const token = ['v2', iv.toString('base64url'), cipher.getAuthTag().toString('base64url'), payload.toString('base64url')].join('.');
+  appendSetCookie(res, serializeCookie(SESSION_COOKIE, token, { maxAge: MAX_AGE_SECONDS }));
 }
 
 export function clearSession(res) {
-  const cookie = serializeCookie(SESSION_COOKIE, '', { maxAge: 0 });
-  appendSetCookie(res, cookie);
+  appendSetCookie(res, serializeCookie(SESSION_COOKIE, '', { maxAge: 0 }));
 }
 
 // Short-lived cookie used only to validate the OAuth `state` param

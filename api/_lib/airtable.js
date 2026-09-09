@@ -29,8 +29,7 @@ async function airtableRequest(path, options = {}) {
   });
 
   if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Airtable request failed (${response.status}): ${body}`);
+    throw new Error(`Airtable request failed (${response.status})`);
   }
 
   return response.json();
@@ -115,6 +114,7 @@ async function uploadScreenshot(recordId, screenshot) {
 export async function createBitsLedgerEntry(entry) {
   const fields = {
     'Submitter Email': entry.email,
+    'Hackatime User ID': entry.accountId,
     'Hackatime Username': entry.hackatimeUsername,
     'Hackatime Project': entry.hackatimeProject,
     'Tracked Hours At Submission': entry.trackedHours,
@@ -131,14 +131,14 @@ export async function createBitsLedgerEntry(entry) {
   return data.id;
 }
 
-// Looks up the most recent ledger entry for a participant so the site can
-// show their real status/approved Bits instead of a local guess. Matches
-// on email rather than Hackatime username — participants know their own
-// email, but most have no idea what their Hackatime username is.
-export async function getLatestLedgerEntry(email) {
-  if (!email) return null;
+// Account ownership comes from the authenticated provider, never a contact email.
+function accountFilter(accountId) {
+  if (typeof accountId !== 'string' || !/^[1-9][0-9]*$/.test(accountId)) throw new Error('Missing account identity');
+  return `{Hackatime User ID} = "${accountId}"`;
+}
 
-  const filterFormula = `LOWER({Submitter Email}) = "${email.toLowerCase().replace(/"/g, '\\"')}"`;
+export async function getLatestLedgerEntry(accountId) {
+  const filterFormula = accountFilter(accountId);
   const params = new URLSearchParams({
     filterByFormula: filterFormula,
     'sort[0][field]': 'Submitted At',
@@ -160,6 +160,7 @@ export async function getLatestLedgerEntry(email) {
 
 export async function createShopClaim(claim) {
   const fields = {
+    'Hackatime User ID': claim.accountId,
     'Hackatime Username': claim.hackatimeUsername,
     'Submitter Email': claim.email,
     'Item Title': claim.itemTitle,
@@ -180,10 +181,8 @@ export async function createShopClaim(claim) {
 // Sum of every claim a participant has made so far, so the real balance
 // is (approved Bits) minus (everything they've spent) — never something
 // the browser can adjust on its own.
-export async function getTotalSpentBits(email) {
-  if (!email) return 0;
-
-  const filterFormula = `LOWER({Submitter Email}) = "${email.toLowerCase().replace(/"/g, '\\"')}"`;
+export async function getTotalSpentBits(accountId) {
+  const filterFormula = accountFilter(accountId);
   const params = new URLSearchParams({ filterByFormula: filterFormula });
 
   let total = 0;
