@@ -558,13 +558,13 @@ h3 {
 .level-base-card {
   margin: 0;
   width: fit-content;
+}
+
+.level-base-card-inner {
   display: grid;
   justify-items: center;
   gap: 2px;
   padding: 10px 22px;
-  border: 2px solid var(--ink);
-  border-radius: 14px;
-  background: var(--paper-soft);
 }
 
 .level-base-tag {

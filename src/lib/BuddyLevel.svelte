@@ -2,6 +2,7 @@
   import { onMount, tick } from 'svelte';
   import Mascot from './Mascot.svelte';
   import HackatimeConnect from './HackatimeConnect.svelte';
+  import RoughFrame from './RoughFrame.svelte';
   import { purchasedUpgrades, buddyLevel } from './buddyStore.js';
 
   const upgrades = [
@@ -83,10 +84,14 @@
 
       <div class="level-diagram-col">
         <div class="level-base-card">
-          <span class="level-base-tag">LEVEL 1</span>
-          <span class="level-base-title">BASE BUDDY</span>
-          <p class="level-base-desc">Sees. Understands. Talks.</p>
-          <a class="level-tutorial-link" href="/docs/buddy-level-1-tutorial.pdf" download>Download the Level 1 build guide (PDF) →</a>
+          <RoughFrame stroke="#26324d" fill="#fffdf6" seed={19} radius={16} roughness={1.9}>
+            <div class="level-base-card-inner">
+              <span class="level-base-tag">LEVEL 1</span>
+              <span class="level-base-title">BASE BUDDY</span>
+              <p class="level-base-desc">Sees. Understands. Talks.</p>
+              <a class="level-tutorial-link" href="/docs/buddy-level-1-tutorial.pdf" download>Download the Level 1 build guide (PDF) →</a>
+            </div>
+          </RoughFrame>
         </div>
 
         <div class="level-diagram" bind:this={diagramEl}>
