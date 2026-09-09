@@ -270,6 +270,12 @@
           </button>
         {/each}
       </nav>
+
+      <a class="submit-callout" href="/submit.html">
+        <RoughFrame stroke="#ec3750" fill="#fff5f2" seed={31} radius={18} roughness={1.9}>
+          <span class="submit-callout-inner">Go to <strong>Submit</strong> to get your Bits! →</span>
+        </RoughFrame>
+      </a>
     </div>
   </section>
 
@@ -519,6 +525,28 @@
   .category-pill.active {
     background: var(--ink);
     color: var(--paper);
+  }
+
+  .submit-callout {
+    display: block;
+    margin-top: 6px;
+    width: fit-content;
+    text-decoration: none;
+    cursor: var(--crosshair);
+  }
+
+  .submit-callout :global(.rough-frame-content) {
+    padding: 12px 20px;
+  }
+
+  .submit-callout-inner {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: var(--ink);
+  }
+
+  .submit-callout-inner strong {
+    color: var(--red);
   }
 
   .shop-tree-section {
