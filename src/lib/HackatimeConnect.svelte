@@ -163,7 +163,7 @@
 
 <style>
   .hackatime-widget {
-    width: min(100%, 480px);
+    width: min(100%, 400px);
     margin: 0 auto 28px;
   }
 
@@ -198,13 +198,31 @@
   .hackatime-inner {
     display: grid;
     justify-items: start;
-    gap: 8px;
-    padding: 16px 18px;
+    gap: 5px;
+    padding: 12px 14px;
+  }
+
+  .hackatime-inner .button {
+    min-height: 34px;
+    padding: 6px 14px;
+    border-radius: 9px;
+    font-size: 0.78rem;
+    box-shadow: 0 3px 0 var(--shadow);
+  }
+
+  .hackatime-inner .button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 0 var(--shadow);
+  }
+
+  .hackatime-inner .button:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--shadow);
   }
 
   .hackatime-status {
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     letter-spacing: 0.03em;
     color: var(--muted);
   }
@@ -212,34 +230,34 @@
   .hackatime-picker-label,
   .hackatime-hours-label {
     font-weight: 800;
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     letter-spacing: 0.04em;
     color: var(--muted);
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   .hackatime-email-hint {
-    font-size: 0.82rem;
+    font-size: 0.74rem;
     color: var(--muted);
     font-weight: 500;
-    max-width: 380px;
+    max-width: 340px;
   }
 
   .hackatime-connect-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
   }
 
   .hackatime-input {
-    flex: 1 1 200px;
-    min-height: 46px;
-    padding: 10px 14px;
+    flex: 1 1 160px;
+    min-height: 34px;
+    padding: 6px 10px;
     border: 2px solid var(--ink);
-    border-radius: 12px;
+    border-radius: 9px;
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     background: var(--white);
     color: var(--ink);
   }
@@ -248,8 +266,8 @@
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
-    gap: 6px;
-    max-height: 190px;
+    gap: 5px;
+    max-height: 140px;
     overflow-y: auto;
     padding: 2px;
     width: 100%;
@@ -259,9 +277,9 @@
     border: 2px solid var(--ink);
     border-radius: 999px;
     background: var(--white);
-    padding: 5px 12px;
+    padding: 3px 10px;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     cursor: var(--crosshair);
   }
 
@@ -273,11 +291,11 @@
   .hackatime-project-name {
     font-family: 'Kalam', cursive;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
   }
 
   .hackatime-hours-value {
-    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    font-size: clamp(1.15rem, 2vw, 1.4rem);
     font-weight: 800;
     color: var(--blue);
     line-height: 1;
@@ -288,7 +306,7 @@
     border: none;
     padding: 0;
     color: var(--muted);
-    font-size: 0.85rem;
+    font-size: 0.74rem;
     font-weight: 600;
     text-decoration: underline;
     text-decoration-thickness: 2px;
@@ -298,13 +316,13 @@
 
   .hackatime-error {
     color: var(--red);
-    font-size: 0.88rem;
+    font-size: 0.78rem;
     font-weight: 600;
   }
 
   .hackatime-banned {
     color: var(--red);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 600;
   }
 </style>
