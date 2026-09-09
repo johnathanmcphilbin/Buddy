@@ -1,7 +1,6 @@
 <script>
   import { onMount } from 'svelte';
   import { gsap } from 'gsap';
-  import Mascot from './lib/Mascot.svelte';
   import RoughDivider from './lib/RoughDivider.svelte';
   import RoughFrame from './lib/RoughFrame.svelte';
   import ShowcaseStill from './lib/ShowcaseStill.svelte';
@@ -233,50 +232,6 @@
             </div>
           {/if}
         {/each}
-      </div>
-    </div>
-  </section>
-
-  <section class="section shop-teaser-section" id="shop-teaser">
-    <div class="section-shell shop-teaser-grid">
-      <div class="shop-teaser-copy">
-        <p class="eyebrow">THE BUDDY SHOP</p>
-        <h2>Build more. Upgrade your Buddy.</h2>
-        <p class="section-lede">Every hour you work earns you 1 Bit. Spend your Bits on things that help you take Buddy further, like a better webcam, AI credits, a microphone, Roboflow credits, or hardware.</p>
-        <p class="shop-teaser-rate">1 HOUR = 1 BIT</p>
-        <p class="shop-teaser-tracking">
-          <img class="shop-teaser-tracking-icon" src="/images/buddy.png" alt="" aria-hidden="true" />
-          Tracked with Lapse and Hackatime.
-        </p>
-        <a class="button secondary-button shop-teaser-cta" href="/shop.html">Visit the shop →</a>
-      </div>
-
-      <div class="shop-teaser-diagram">
-        <svg class="shop-teaser-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M22 20 C 30 28, 38 34, 47 46" fill="none" stroke="#ec3750" stroke-width="0.6" stroke-linecap="round" />
-          <path d="M78 16 C 68 24, 60 32, 52 44" fill="none" stroke="#ff8c37" stroke-width="0.6" stroke-linecap="round" />
-          <path d="M76 74 C 66 68, 60 62, 54 54" fill="none" stroke="#338eda" stroke-width="0.6" stroke-linecap="round" />
-        </svg>
-
-        <div class="shop-teaser-buddy">
-          <Mascot state="idle" size={128} />
-          <span class="shop-teaser-buddy-label">BUDDY</span>
-        </div>
-
-        <div class="shop-teaser-tag shop-teaser-tag-webcam">
-          <span class="shop-teaser-tag-label">WEBCAM</span>
-          <span class="shop-teaser-tag-price">8 Bits</span>
-        </div>
-
-        <div class="shop-teaser-tag shop-teaser-tag-brain">
-          <span class="shop-teaser-tag-label">AI BRAIN</span>
-          <span class="shop-teaser-tag-price">2 Bits</span>
-        </div>
-
-        <div class="shop-teaser-tag shop-teaser-tag-mic">
-          <span class="shop-teaser-tag-label">MICROPHONE</span>
-          <span class="shop-teaser-tag-price">7 Bits</span>
-        </div>
       </div>
     </div>
   </section>
