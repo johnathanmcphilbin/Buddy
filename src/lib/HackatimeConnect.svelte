@@ -104,6 +104,7 @@
       <p class="eyebrow">CONNECT HACKATIME</p>
       <h2>How many hours have you put in?</h2>
       <p class="section-lede">Connect Hackatime and pick which project is your Buddy to see your real tracked hours.</p>
+      <a class="lapse-link" href="https://lapse.hackclub.com/" target="_blank" rel="noopener">TRACK WITH LAPSE →</a>
     </div>
 
     <div class="hackatime-panel">
@@ -177,6 +178,16 @@
     text-align: center;
     max-width: 560px;
     margin: 0 auto;
+  }
+
+  .lapse-link {
+    display: inline-block;
+    margin-top: 2px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: var(--blue);
+    text-decoration: underline;
   }
 
   .hackatime-panel {

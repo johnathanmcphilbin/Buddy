@@ -243,7 +243,7 @@
       <p class="shop-subhead">Every hour you build earns you 1 Bit. Spend your Bits on things that make Buddy see, think, hear, and do more.</p>
 
       <p class="shop-rate">1 HOUR = 1 BIT</p>
-      <p class="shop-tracking">Tracked with Lapse and Hackatime.</p>
+      <p class="shop-tracking">Tracked with <a href="https://lapse.hackclub.com/" target="_blank" rel="noopener">Lapse</a> and Hackatime.</p>
 
       <div class="balance-readout">
         <RoughFrame stroke="#26324d" fill="#fffdf6" seed={12} radius={22} roughness={2}>
@@ -437,6 +437,12 @@
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--muted);
+  }
+
+  .shop-tracking a {
+    color: var(--red);
+    font-weight: 800;
+    text-decoration: underline;
   }
 
   .balance-readout {
