@@ -1,7 +1,7 @@
 import { getAuthenticatedProfile } from '../_lib/hackatime-server.js';
-import { availableBits } from '../_lib/balance.js';
+import { availableBits, totalApprovedBits } from '../_lib/balance.js';
 import { getSession } from '../_lib/session.js';
-import { getLatestLedgerEntry, getTotalSpentBits } from '../_lib/airtable.js';
+import { getAllLedgerEntries, getTotalSpentBits } from '../_lib/airtable.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -25,29 +25,31 @@ export default async function handler(req, res) {
       res.status(403).json({ error: 'This account cannot earn or spend Bits.', balance: 0 });
       return;
     }
-    const [entry, spent] = await Promise.all([
-      getLatestLedgerEntry(profile.accountId),
+    const [entries, spent] = await Promise.all([
+      getAllLedgerEntries(profile.accountId),
       getTotalSpentBits(profile.accountId)
     ]);
 
-    if (!entry) {
+    if (entries.length === 0) {
       res.status(200).json({ status: 'Not submitted', approvedBits: 0, balance: 0 });
       return;
     }
 
-    // Approving just means flipping Status to "Approved" in Airtable — Bits
-    // default to the tracked hours at submission time (1 hour = 1 Bit,
-    // rounded), with no extra step needed. Filling in "Approved Bits"
-    // manually overrides that default for cases where fewer hours should count.
-    const approvedBits = availableBits(entry, 0);
+    // Every submission adds its own ledger line for the new hours logged
+    // since last time, so Bits earned is the sum of every Approved line
+    // (Bits default to that line's tracked hours, rounded, unless a
+    // reviewer fills in "Approved Bits" to override it) rather than just
+    // the most recent submission.
+    const approvedBits = totalApprovedBits(entries);
+    const latest = entries[entries.length - 1];
 
     res.status(200).json({
-      status: entry.status,
+      status: latest.status,
       approvedBits,
       spentBits: spent,
-      balance: availableBits(entry, spent),
-      trackedHours: entry.trackedHours,
-      reviewerNotes: entry.reviewerNotes
+      balance: availableBits(entries, spent),
+      trackedHours: latest.trackedHours,
+      reviewerNotes: latest.reviewerNotes
     });
   } catch (error) {
     res.status(502).json({ error: 'Could not load your balance.', balance: 0 });

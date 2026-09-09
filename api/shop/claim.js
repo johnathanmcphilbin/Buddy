@@ -1,6 +1,6 @@
 import { getSession } from '../_lib/session.js';
 import { getAuthenticatedProfile } from '../_lib/hackatime-server.js';
-import { getLatestLedgerEntry, getTotalSpentBits, createShopClaim } from '../_lib/airtable.js';
+import { getAllLedgerEntries, getTotalSpentBits, createShopClaim } from '../_lib/airtable.js';
 import { getShopItem } from '../_lib/shop-inventory.js';
 import { sendReviewEmail } from '../_lib/email.js';
 import { availableBits } from '../_lib/balance.js';
@@ -29,11 +29,11 @@ export default async function handler(req, res) {
     release = await acquireClaimLock(profile.accountId);
     if (!release) return res.status(409).json({ error: 'A previous claim is processing or needs review. Please wait before trying again.' });
 
-    const [entry, spent] = await Promise.all([
-      getLatestLedgerEntry(profile.accountId),
+    const [entries, spent] = await Promise.all([
+      getAllLedgerEntries(profile.accountId),
       getTotalSpentBits(profile.accountId)
     ]);
-    const balance = availableBits(entry, spent);
+    const balance = availableBits(entries, spent);
     if (balance < item.price) return res.status(200).json({ claimed: false, error: 'You need more Bits for this upgrade.', balance });
 
     writeUncertain = true;
