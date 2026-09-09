@@ -167,8 +167,6 @@ export default async function handler(req, res) {
       return;
     }
     console.error('Submission failed:', error);
-    // TEMPORARY: surfacing the real error to the organizer to diagnose a
-    // live outage. Revert to the generic message once the cause is fixed.
-    res.status(502).json({ error: `Submission could not be completed: ${error.message}` });
+    res.status(502).json({ error: 'Submission could not be completed. Please contact the organizer before retrying.' });
   }
 }
