@@ -188,6 +188,18 @@ h3 {
   font-weight: 500;
 }
 
+.level-lede-note {
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.level-lede-note a {
+  color: var(--red);
+  font-weight: 800;
+  text-decoration: underline;
+}
+
 .cta-wrap {
   display: inline-flex;
 }
