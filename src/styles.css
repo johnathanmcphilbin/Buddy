@@ -567,6 +567,14 @@ h3 {
   font-weight: 600;
 }
 
+.level-tutorial-link {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--red);
+  text-decoration: underline;
+}
+
 .level-diagram {
   position: relative;
   width: min(100%, 720px);

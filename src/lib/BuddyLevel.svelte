@@ -79,6 +79,7 @@
       <span class="level-base-tag">LEVEL 1</span>
       <span class="level-base-title">BASE BUDDY</span>
       <p class="level-base-desc">Sees. Understands. Talks.</p>
+      <a class="level-tutorial-link" href="/docs/buddy-level-1-tutorial.pdf" download>Download the Level 1 build guide (PDF) →</a>
     </div>
 
     <div class="level-diagram" bind:this={diagramEl}>
