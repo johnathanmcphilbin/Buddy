@@ -200,7 +200,7 @@
             <img class="hero-stage-image" src="/images/demo.png" alt="Example Buddy detection with objects boxed and labeled" />
           </div>
         </RoughFrame>
-        <img class="hero-buddy-badge" src="/images/buddy.png" alt="Buddy" />
+        <img class="hero-buddy-badge" src="/images/buddy-excited.png" alt="Buddy" />
       </div>
     </div>
   </section>
@@ -211,6 +211,7 @@
         <p class="eyebrow">HOW IT WORKS</p>
         <h2>From photos to a talking Buddy.</h2>
         <p class="section-lede">You’ll train your own object detector in Roboflow, plug it into a starter webpage, then write the logic that gives Buddy something to say.</p>
+        <img class="section-sticker sticker-glasses" src="/images/buddy-glasses.png" alt="" aria-hidden="true" />
       </div>
 
       <div class="build-flow">
@@ -247,6 +248,7 @@
           <h2>What could your Buddy do?</h2>
         </div>
         <p class="section-lede">Here are a few things you could build. Start with one of these, remix it, or make something completely different.</p>
+        <img class="section-sticker sticker-star" src="/images/buddy-star.png" alt="" aria-hidden="true" />
       </div>
 
       <div class="showcase-grid">

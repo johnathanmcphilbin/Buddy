@@ -238,6 +238,7 @@
 <main class="shop-page">
   <section class="shop-top">
     <div class="section-shell shop-top-shell">
+      <img class="shop-sticker" src="/images/buddy-star.png" alt="" aria-hidden="true" />
       <p class="eyebrow">BUDDY SHOP</p>
       <h1>Upgrade your Buddy.</h1>
       <p class="shop-subhead">Every hour you build earns you 1 Bit. Spend your Bits on things that make Buddy see, think, hear, and do more.</p>
@@ -411,9 +412,27 @@
   }
 
   .shop-top-shell {
+    position: relative;
     display: grid;
     justify-items: start;
     gap: 14px;
+  }
+
+  .shop-sticker {
+    position: absolute;
+    top: -6px;
+    right: clamp(4px, 4vw, 40px);
+    width: clamp(56px, 7vw, 86px);
+    height: clamp(56px, 7vw, 86px);
+    filter: drop-shadow(0 6px 0 rgba(38, 50, 77, 0.14));
+    transform: rotate(-10deg);
+    pointer-events: none;
+  }
+
+  @media (max-width: 720px) {
+    .shop-sticker {
+      display: none;
+    }
   }
 
   .shop-page h1 {
