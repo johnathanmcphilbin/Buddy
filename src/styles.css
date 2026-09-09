@@ -311,6 +311,7 @@ h3 {
   bottom: clamp(-18px, -3vw, -10px);
   width: clamp(72px, 10vw, 108px);
   height: clamp(72px, 10vw, 108px);
+  object-fit: contain;
   filter: drop-shadow(0 6px 0 rgba(38, 50, 77, 0.14));
   transform: rotate(-6deg);
 }
@@ -361,30 +362,20 @@ h3 {
   margin-bottom: clamp(34px, 6vw, 64px);
 }
 
-.section-sticker {
-  position: absolute;
-  width: clamp(56px, 7vw, 86px);
-  height: clamp(56px, 7vw, 86px);
-  filter: drop-shadow(0 6px 0 rgba(38, 50, 77, 0.14));
-  pointer-events: none;
+.heading-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
-.sticker-glasses {
-  top: -12px;
-  right: 4px;
-  transform: rotate(8deg);
-}
-
-.sticker-star {
-  top: -20px;
-  right: -4px;
-  transform: rotate(-10deg);
-}
-
-@media (max-width: 720px) {
-  .section-sticker {
-    display: none;
-  }
+.heading-sticker {
+  width: clamp(40px, 4.5vw, 56px);
+  height: clamp(40px, 4.5vw, 56px);
+  object-fit: contain;
+  filter: drop-shadow(0 4px 0 rgba(38, 50, 77, 0.14));
+  transform: rotate(-8deg);
+  flex-shrink: 0;
 }
 
 .split-heading {

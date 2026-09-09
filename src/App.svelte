@@ -209,9 +209,11 @@
     <div class="section-shell">
       <div class="section-heading">
         <p class="eyebrow">HOW IT WORKS</p>
-        <h2>From photos to a talking Buddy.</h2>
+        <div class="heading-row">
+          <h2>From photos to a talking Buddy.</h2>
+          <img class="heading-sticker" src="/images/buddy-glasses.png" alt="" aria-hidden="true" />
+        </div>
         <p class="section-lede">You’ll train your own object detector in Roboflow, plug it into a starter webpage, then write the logic that gives Buddy something to say.</p>
-        <img class="section-sticker sticker-glasses" src="/images/buddy-glasses.png" alt="" aria-hidden="true" />
       </div>
 
       <div class="build-flow">
@@ -245,10 +247,12 @@
       <div class="section-heading split-heading">
         <div>
           <p class="eyebrow">IDEAS TO STEAL</p>
-          <h2>What could your Buddy do?</h2>
+          <div class="heading-row">
+            <h2>What could your Buddy do?</h2>
+            <img class="heading-sticker" src="/images/buddy-star.png" alt="" aria-hidden="true" />
+          </div>
         </div>
         <p class="section-lede">Here are a few things you could build. Start with one of these, remix it, or make something completely different.</p>
-        <img class="section-sticker sticker-star" src="/images/buddy-star.png" alt="" aria-hidden="true" />
       </div>
 
       <div class="showcase-grid">

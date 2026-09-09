@@ -145,9 +145,11 @@
 <main class="submit-page">
   <section class="section submit-top">
     <div class="section-shell submit-top-shell">
-      <img class="submit-sticker" src="/images/buddy-glasses.png" alt="" aria-hidden="true" />
       <p class="eyebrow">SUBMIT BUDDY</p>
-      <h1>Submit your Buddy.</h1>
+      <div class="heading-row">
+        <h1>Submit your Buddy.</h1>
+        <img class="heading-sticker" src="/images/buddy-glasses.png" alt="" aria-hidden="true" />
+      </div>
       <p class="submit-subhead">A working live webcam demo, your Roboflow project or dataset, and a short video showing Buddy detecting multiple objects and speaking different responses based on what it sees.</p>
 
       {#if !isLoading}
@@ -319,27 +321,9 @@
   }
 
   .submit-top-shell {
-    position: relative;
     display: grid;
     justify-items: start;
     gap: 14px;
-  }
-
-  .submit-sticker {
-    position: absolute;
-    top: -6px;
-    right: clamp(4px, 4vw, 40px);
-    width: clamp(56px, 7vw, 86px);
-    height: clamp(56px, 7vw, 86px);
-    filter: drop-shadow(0 6px 0 rgba(38, 50, 77, 0.14));
-    transform: rotate(8deg);
-    pointer-events: none;
-  }
-
-  @media (max-width: 720px) {
-    .submit-sticker {
-      display: none;
-    }
   }
 
   .submit-page h1 {
