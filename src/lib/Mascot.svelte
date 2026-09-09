@@ -6,7 +6,7 @@
 
 <figure class="mascot" style={`--mascot-size:${size}px`}>
   <div class="mascot-stage">
-    <img class="mascot-image" src="/images/buddy.png" alt="Buddy" width={size} height={size} />
+    <img class="mascot-image" src="/images/buddy-excited.png" alt="Buddy" width={size} height={size} />
   </div>
   {#if caption}
     <figcaption>{caption}</figcaption>

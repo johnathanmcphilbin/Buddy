@@ -368,6 +368,15 @@
   </section>
 </main>
 
+<footer class="site-footer">
+  <div class="section-shell footer-layout">
+    <a href="https://hackclub.com">Hack Club</a>
+    <a href="https://hackclub.com/privacy-and-terms">Privacy &amp; Terms</a>
+    <a href="https://github.com/johnathanmcphilbin/Buddy" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://callum-moody.carrd.co/" target="_blank" rel="noopener">Art by Callum Moody</a>
+  </div>
+</footer>
+
 {#if selectedItem}
   <div class="modal-backdrop" role="presentation" on:click={closeModal}>
     <div class="modal-panel" role="dialog" aria-modal="true" on:click|stopPropagation>
