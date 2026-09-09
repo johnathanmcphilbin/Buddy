@@ -132,22 +132,28 @@ export default async function handler(req, res) {
       submissionRecordId
     });
 
-    await sendReviewEmail({
-      to: REVIEWER_EMAIL,
-      subject: `Buddy submission: ${body.firstName} ${body.lastName}`,
-      html: `
-        <p><strong>${escapeHtml(body.firstName)} ${escapeHtml(body.lastName)}</strong> (${escapeHtml(body.email)}) submitted a Buddy for review.</p>
-        <ul>
-          <li>Hackatime project: ${escapeHtml(session.hackatimeProject)}</li>
-          <li>New tracked hours since last submission: ${trackedHours.toFixed(1)}</li>
-          <li>Code URL: <a href="${escapeHtml(body.codeUrl)}">${escapeHtml(body.codeUrl)}</a></li>
-          <li>Playable URL: <a href="${escapeHtml(body.playableUrl)}">${escapeHtml(body.playableUrl)}</a></li>
-          ${body.roboflowUrl ? `<li>Roboflow: <a href="${escapeHtml(body.roboflowUrl)}">${escapeHtml(body.roboflowUrl)}</a></li>` : ''}
-        </ul>
-        <p>${escapeHtml(fullDescription).replace(/\n/g, '<br />')}</p>
-        <p>Open the Buddy Bits Ledger table in Airtable and set this entry's Status to Approved to award Bits for these new hours (defaults to the tracked hours above — fill in Approved Bits there to award a different amount).</p>
-      `
-    });
+    // Best-effort: a failed notification email should never make a
+    // successful Airtable submission look like it failed to the user.
+    try {
+      await sendReviewEmail({
+        to: REVIEWER_EMAIL,
+        subject: `Buddy submission: ${body.firstName} ${body.lastName}`,
+        html: `
+          <p><strong>${escapeHtml(body.firstName)} ${escapeHtml(body.lastName)}</strong> (${escapeHtml(body.email)}) submitted a Buddy for review.</p>
+          <ul>
+            <li>Hackatime project: ${escapeHtml(session.hackatimeProject)}</li>
+            <li>New tracked hours since last submission: ${trackedHours.toFixed(1)}</li>
+            <li>Code URL: <a href="${escapeHtml(body.codeUrl)}">${escapeHtml(body.codeUrl)}</a></li>
+            <li>Playable URL: <a href="${escapeHtml(body.playableUrl)}">${escapeHtml(body.playableUrl)}</a></li>
+            ${body.roboflowUrl ? `<li>Roboflow: <a href="${escapeHtml(body.roboflowUrl)}">${escapeHtml(body.roboflowUrl)}</a></li>` : ''}
+          </ul>
+          <p>${escapeHtml(fullDescription).replace(/\n/g, '<br />')}</p>
+          <p>Open the Buddy Bits Ledger table in Airtable and set this entry's Status to Approved to award Bits for these new hours (defaults to the tracked hours above — fill in Approved Bits there to award a different amount).</p>
+        `
+      });
+    } catch (error) {
+      console.error('Review notification email failed:', error.message);
+    }
 
     // Email is only a contact address; authenticated account owns the balance.
     if (session.hackatimeEmail !== body.email) {
@@ -156,6 +162,11 @@ export default async function handler(req, res) {
 
     res.status(200).json({ submitted: true });
   } catch (error) {
+    if (error.code === 'UNAUTHORIZED') {
+      res.status(401).json({ error: 'Your Hackatime session expired. Reconnect Hackatime and try again.' });
+      return;
+    }
+    console.error('Submission failed:', error);
     res.status(502).json({ error: 'Submission could not be completed. Please contact the organizer before retrying.' });
   }
 }
