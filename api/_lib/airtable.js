@@ -29,7 +29,10 @@ async function airtableRequest(path, options = {}) {
   });
 
   if (!response.ok) {
-    throw new Error(`Airtable request failed (${response.status})`);
+    // TEMPORARY: include Airtable's own error body to diagnose a live
+    // outage. Revert to the status-only message once the cause is fixed.
+    const body = await response.text();
+    throw new Error(`Airtable request failed (${response.status}): ${body}`);
   }
 
   return response.json();
