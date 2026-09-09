@@ -1,6 +1,7 @@
 <script>
   import { onMount, tick } from 'svelte';
   import Mascot from './Mascot.svelte';
+  import HackatimeConnect from './HackatimeConnect.svelte';
   import { purchasedUpgrades, buddyLevel } from './buddyStore.js';
 
   const upgrades = [
@@ -74,6 +75,8 @@
       <p class="section-lede">Every Buddy starts at Level 1 once it can see, understand, and talk. Every upgrade you add after that pushes it up another level.</p>
       <p class="section-lede level-lede-note">Upgrades cost Bits, and Bits come from hours you submit and get approved. <a href="/submit.html">Submit your build</a> to earn Bits, then spend them in the <a href="/shop.html">shop</a>.</p>
     </div>
+
+    <HackatimeConnect />
 
     <div class="level-base-card">
       <span class="level-base-tag">LEVEL 1</span>

@@ -8,7 +8,6 @@
   import StepArrow from './lib/StepArrow.svelte';
   import WorkedExample from './lib/WorkedExample.svelte';
   import BuddyLevel from './lib/BuddyLevel.svelte';
-  import HackatimeConnect from './lib/HackatimeConnect.svelte';
 
   const brandColors = ['#ec3750', '#ff8c37', '#f1c40f', '#33d6a6', '#338eda', '#a633d6'];
 
@@ -235,8 +234,6 @@
       </div>
     </div>
   </section>
-
-  <HackatimeConnect />
 
   <BuddyLevel />
 
