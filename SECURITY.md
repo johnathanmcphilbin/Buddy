@@ -13,13 +13,22 @@ source review, not certification that the deployed service is secure.
   uses the same handler. Added a shared daily upstream-call cap (default 10,000)
   to bound paid inference abuse. Anonymous visitors can exhaust the daily quota;
   stronger bot protection may be desirable for a public launch.
-- **Account impersonation via email:** `/api/hackatime/set-email` accepts any
-  contact email, while balances and spending are looked up by that email. A fix
-  switching lookups to the immutable Hackatime account ID was deployed 2026-09-09
-  but rolled back the same day: it requires a `Hackatime User ID` field on both
-  Airtable tables that was never added, which broke all submissions and claims.
-  Reverted to email-based lookup by explicit decision — the impersonation risk
-  documented here is accepted for now, not fixed.
+- **Account impersonation via email:** `/api/hackatime/set-email` and
+  `/api/submit` used to accept any contact email and trust it for balance
+  lookups, so a different Hackatime account could type someone else's email
+  and read or add to their balance. A first attempted fix (2026-09-09) switched
+  lookups to a new `Hackatime User ID` Airtable field, but that field was never
+  added and it broke all submissions and claims; it was rolled back the same
+  day. Replaced with `api/_lib/identity.js`: a first-write-wins binding between
+  a verified Hackatime account ID and its email, stored in the same Redis
+  already required for claim locking. `set-email` and `submit` both call
+  `verifyOrBindEmail(accountId, email)` before trusting the email — the first
+  account to use an email owns it there on; a different account reusing that
+  email is rejected with a 409. No Airtable schema change or new
+  infrastructure required. Gap: an attacker who front-runs a legitimate
+  participant's first submission (guesses their email and submits before they
+  do) still locks out that email first; this closes reuse, not first-use
+  squatting.
 - **Concurrent overspending:** claims used a separate balance read and Airtable
   write. Added a shared per-account Redis lock around the balance check, write
   and debit visibility check. It has no expiry: an ambiguous write or crashed
@@ -44,19 +53,18 @@ source review, not certification that the deployed service is secure.
    paste it into source or chat. Rotation is required even after deleting source:
    the old value remains in Git history, old deployments and the separate nested
    `Buddy/` checkout. That untracked checkout was left unchanged. Do not deploy it.
-2. Add a **single-line text** field named `Hackatime User ID` to both Airtable
-   tables: `Buddy Bits Ledger` and `Buddy Shop Claims`. Backfill **every existing
-   earned AND spent record** with its verified numeric Hackatime account ID as
-   text. Verify ownership from provider/admin records; never trust an arbitrary
-   email supplied by a visitor. Reconcile suspicious legacy claims and blank
-   identities manually. Missing old spending would otherwise inflate balances.
+2. The `Hackatime User ID` Airtable field migration was abandoned (see above) —
+   no Airtable schema change is required. If any legacy ledger/claim rows
+   already have emails that don't match their true Hackatime account, that's
+   a pre-existing data-quality issue independent of this fix; reconcile
+   manually if suspected.
 3. Configure a persistent, non-evicting Redis database shared by all production
    workers, with `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Avoid
-   replica reads, expiring trial databases and automatic clearing of claim locks.
-   Keep preview deployments isolated from production storage and Airtable data.
-4. Set a strong random `SESSION_SECRET` of at least 32 characters. Set
-   `BITS_ACCOUNT_IDS_MIGRATED=true` **only after the data reconciliation above**.
-   Until then, balance reads and claims return a maintenance error. Configure
+   replica reads, expiring trial databases and automatic clearing of claim locks
+   **and identity bindings** (`buddy:identity:email:*` keys must never expire
+   or be cleared — that's what enforces one-account-per-email). Keep preview
+   deployments isolated from production storage and Airtable data.
+4. Set a strong random `SESSION_SECRET` of at least 32 characters. Configure
    `ROBOFLOW_DAILY_LIMIT` to the acceptable global daily request allowance.
 5. Deploy these fixes, reconnect, and verify a real approved account and a real
    debit using non-production data first. Production environment settings,
@@ -75,10 +83,13 @@ are the source of truth if an email notification fails.
 
 ## Validation and limits
 
-- `node --test tests/security.test.js`: 20 tests covering account substitution,
-  server pricing, concurrent/sequential claims, ambiguous writes, missing storage,
-  migration gate, invalid ledger values, forged/expired sessions, banned accounts,
-  secret stripping, inference quota, unsafe images and email markup.
+- `node --test tests/security.test.js`: 24 tests, all passing. Covers the
+  email/account identity binding (first-write-wins, cross-account rejection
+  at both `set-email` and `submit`), server-priced claims, concurrent/
+  sequential claims, ambiguous writes, missing storage, invalid ledger
+  values, forged/expired sessions, banned accounts, secret stripping,
+  inference quota, unsafe images, email markup, and the 2-hour minimum
+  project-hours gate on submission.
 - `npm run build`: passes; existing Svelte accessibility/unused-property warnings.
 - Pattern-based scan of reachable local Git history found one distinct credential
   candidate: the Roboflow key. No additional obvious credential literals found.
