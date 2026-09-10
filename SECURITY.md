@@ -16,19 +16,25 @@ source review, not certification that the deployed service is secure.
 - **Account impersonation via email:** `/api/hackatime/set-email` and
   `/api/submit` used to accept any contact email and trust it for balance
   lookups, so a different Hackatime account could type someone else's email
-  and read or add to their balance. A first attempted fix (2026-09-09) switched
-  lookups to a new `Hackatime User ID` Airtable field, but that field was never
-  added and it broke all submissions and claims; it was rolled back the same
-  day. Replaced with `api/_lib/identity.js`: a first-write-wins binding between
-  a verified Hackatime account ID and its email, stored in the same Redis
-  already required for claim locking. `set-email` and `submit` both call
-  `verifyOrBindEmail(accountId, email)` before trusting the email — the first
-  account to use an email owns it there on; a different account reusing that
-  email is rejected with a 409. No Airtable schema change or new
-  infrastructure required. Gap: an attacker who front-runs a legitimate
-  participant's first submission (guesses their email and submits before they
-  do) still locks out that email first; this closes reuse, not first-use
-  squatting.
+  and read or add to their balance. Two earlier attempted fixes on
+  2026-09-09/10 were rolled back: adding a `Hackatime User ID` Airtable field
+  (the field was never actually added, breaking all submissions/claims), then
+  a Redis-based first-write-wins binding (production's Redis wasn't actually
+  configured, breaking `set-email` immediately since the old
+  `BITS_ACCOUNT_IDS_MIGRATED` gate had silently masked every Redis-dependent
+  code path being broken until then). Final fix, `api/_lib/identity.js`'s
+  `emailOwnedByOther`, needs neither: it reads the `Hackatime Username` field
+  Buddy already writes into every Buddy Bits Ledger row, and rejects an email
+  whose prior rows belong to a different username. `set-email` and `submit`
+  both check this before trusting the email — a brand-new email is open to
+  whoever submits with it first; reuse by a different account gets a 409. No
+  schema change, no new infrastructure, no dependency on Redis being
+  configured correctly. Gap: an attacker who front-runs a legitimate
+  participant's first *submission* (not just a saved email — a submission is
+  what actually creates a ledger row) still occupies that email first; this
+  closes reuse, not first-use squatting, and squatting now requires a visible
+  fabricated submission a reviewer would see in Airtable, not just a bare
+  API call.
 - **Concurrent overspending:** claims used a separate balance read and Airtable
   write. Added a shared per-account Redis lock around the balance check, write
   and debit visibility check. It has no expiry: an ambiguous write or crashed
@@ -60,10 +66,10 @@ source review, not certification that the deployed service is secure.
    manually if suspected.
 3. Configure a persistent, non-evicting Redis database shared by all production
    workers, with `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Avoid
-   replica reads, expiring trial databases and automatic clearing of claim locks
-   **and identity bindings** (`buddy:identity:email:*` keys must never expire
-   or be cleared — that's what enforces one-account-per-email). Keep preview
-   deployments isolated from production storage and Airtable data.
+   replica reads, expiring trial databases and automatic clearing of claim locks.
+   Keep preview deployments isolated from production storage and Airtable data.
+   Confirmed missing/broken as of 2026-09-10 (see impersonation-fix history
+   above) — verify it's actually reachable before relying on claim locking.
 4. Set a strong random `SESSION_SECRET` of at least 32 characters. Configure
    `ROBOFLOW_DAILY_LIMIT` to the acceptable global daily request allowance.
 5. Deploy these fixes, reconnect, and verify a real approved account and a real
@@ -83,8 +89,8 @@ are the source of truth if an email notification fails.
 
 ## Validation and limits
 
-- `node --test tests/security.test.js`: 24 tests, all passing. Covers the
-  email/account identity binding (first-write-wins, cross-account rejection
+- `node --test tests/security.test.js`: 25 tests, all passing. Covers the
+  email/account identity check (ledger-history-based, cross-account rejection
   at both `set-email` and `submit`), server-priced claims, concurrent/
   sequential claims, ambiguous writes, missing storage, invalid ledger
   values, forged/expired sessions, banned accounts, secret stripping,

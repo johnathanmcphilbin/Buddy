@@ -8,7 +8,7 @@ import submit from '../api/submit.js';
 import setEmail from '../api/hackatime/set-email.js';
 import { availableBits } from '../api/_lib/balance.js';
 import { getAllLedgerEntries } from '../api/_lib/airtable.js';
-import { verifyOrBindEmail } from '../api/_lib/identity.js';
+import { emailOwnedByOther } from '../api/_lib/identity.js';
 import { escapeHtml } from '../api/_lib/html.js';
 
 const originalFetch = globalThis.fetch;
@@ -25,11 +25,11 @@ function request(body = {}, email = 'attacker@example.com', token = 'test-oauth'
   return { method: 'POST', body, headers: { cookie: res.headers['Set-Cookie'].split(';')[0] } };
 }
 const json = (body, ok = true) => ({ ok, status: ok ? 200 : 500, json: async () => body });
-let spent, claims, lockOwner, identityBindings, queriedFilters, options;
+let spent, claims, lockOwner, queriedFilters, options;
 beforeEach(() => {
   Object.assign(process.env, { SESSION_SECRET: 'security-test-only-secret-32-characters-long', RESEND_API_KEY: 'test-resend', AIRTABLE_TOKEN: 'test-airtable', AIRTABLE_BASE_ID: 'test-base',
     UPSTASH_REDIS_REST_URL: 'https://redis.example.test', UPSTASH_REDIS_REST_TOKEN: 'test-redis', ROBOFLOW_API_KEY: 'test-private-key' });
-  spent = 0; claims = []; lockOwner = null; identityBindings = {}; queriedFilters = []; options = {};
+  spent = 0; claims = []; lockOwner = null; queriedFilters = []; options = {};
   globalThis.fetch = async (url, init = {}) => {
     const target = String(url);
     if (target.includes('redis.example.test')) {
@@ -40,19 +40,12 @@ beforeEach(() => {
         if (lockOwner) return json({ result: null });
         lockOwner = command[2]; return json({ result: 'OK' });
       }
-      // Everything else is EVAL: ['EVAL', script, numkeys, key, ...args]
-      const key = command[3];
-      if (typeof key === 'string' && key.startsWith('buddy:identity:email:')) {
-        const requested = command[4];
-        if (identityBindings[key] === undefined) identityBindings[key] = requested;
-        return json({ result: identityBindings[key] });
-      }
       if (command[1].includes('INCR')) return json({ result: options.demoCount ?? 1 });
       // Claim lock release: ['EVAL', script, '1', key, owner]
       if (lockOwner === command[4]) lockOwner = null;
       return json({ result: 1 });
     }
-    if (target.endsWith('/authenticated/me')) return json({ id: options.accountId ?? 123, username: 'attacker', trust_factor: { trust_level: options.banned ? 'red' : 'green' } });
+    if (target.endsWith('/authenticated/me')) return json({ id: options.accountId ?? 123, username: options.username ?? 'attacker', trust_factor: { trust_level: options.banned ? 'red' : 'green' } });
     if (target.endsWith('/authenticated/projects')) return json({ projects: [{ name: 'Buddy', total_seconds: options.projectSeconds ?? 36000 }] });
     if (target.includes('api.airtable.com')) {
       const parsed = new URL(target);
@@ -65,7 +58,7 @@ beforeEach(() => {
         return json({ id: 'rec-test' });
       }
       queriedFilters.push(parsed.searchParams.get('filterByFormula'));
-      if (parsed.pathname.includes('Ledger')) return json({ records: [{ fields: { Status: 'Approved', 'Approved Bits': options.approved ?? 8 } }] });
+      if (parsed.pathname.includes('Ledger')) return json({ records: options.ledgerRecords ?? [{ fields: { Status: 'Approved', 'Approved Bits': options.approved ?? 8 } }] });
       return json({ records: [{ fields: { 'Bits Spent': spent } }] });
     }
     if (target.includes('api.resend.com')) {
@@ -98,30 +91,31 @@ test('default placeholder secret rejected', () => {
   assert.throws(() => request());
 });
 
-// --- Email/account identity binding (api/_lib/identity.js) ---
-test('first account to use an email owns it; a different account is rejected', async () => {
-  assert.equal(await verifyOrBindEmail('123', 'shared@example.com'), true);
-  assert.equal(await verifyOrBindEmail('123', 'shared@example.com'), true, 'same account can keep using its own email');
-  assert.equal(await verifyOrBindEmail('456', 'shared@example.com'), false, 'a different account cannot claim an already-bound email');
+// --- Email/account identity check (api/_lib/identity.js) ---
+// No Redis, no new Airtable field: reuses the Hackatime Username Buddy
+// already writes into every ledger row.
+test('emailOwnedByOther flags a conflicting username, ignores blank or matching ones', () => {
+  assert.equal(emailOwnedByOther([], 'me'), false, 'no history yet: open to whoever uses it first');
+  assert.equal(emailOwnedByOther([{ hackatimeUsername: 'me' }], 'me'), false, 'own prior rows are not a conflict');
+  assert.equal(emailOwnedByOther([{ hackatimeUsername: null }], 'me'), false, 'blank username on a row is not a conflict');
+  assert.equal(emailOwnedByOther([{ hackatimeUsername: 'someone-else' }], 'me'), true);
 });
-test('set-email rejects an email already bound to a different Hackatime account', async () => {
-  const first = response(); await setEmail(request({ email: 'victim@example.com' }, 'irrelevant'), first);
-  assert.equal(first.code, 200); assert.equal(first.body.email, 'victim@example.com');
-
-  options.accountId = 456;
-  const second = response(); await setEmail(request({ email: 'victim@example.com' }, 'irrelevant'), second);
-  assert.equal(second.code, 409);
+test('set-email rejects an email whose ledger history belongs to a different Hackatime account', async () => {
+  options.ledgerRecords = [{ fields: { 'Hackatime Username': 'victim-owner' } }];
+  const res = response(); await setEmail(request({ email: 'victim@example.com' }, 'irrelevant'), res);
+  assert.equal(res.code, 409);
 });
-test('submit rejects reusing an email already bound to a different account', async () => {
+test('set-email allows an email with no prior ledger history', async () => {
+  options.ledgerRecords = [];
+  const res = response(); await setEmail(request({ email: 'new@example.com' }, 'irrelevant'), res);
+  assert.equal(res.code, 200); assert.equal(res.body.email, 'new@example.com');
+});
+test('submit rejects an email whose ledger history belongs to a different Hackatime account', async () => {
+  options.ledgerRecords = [{ fields: { 'Hackatime Username': 'victim-owner', 'Hackatime Project': 'Buddy' } }];
   const body = Object.fromEntries(['codeUrl', 'playableUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
   body.codeUrl = 'https://example.com'; body.playableUrl = 'https://example.com'; body.email = 'victim@example.com';
-
-  const first = response(); await submit(request(body, 'irrelevant'), first);
-  assert.equal(first.code, 200);
-
-  options.accountId = 456;
-  const second = response(); await submit(request(body, 'irrelevant'), second);
-  assert.equal(second.code, 409);
+  const res = response(); await submit(request(body), res);
+  assert.equal(res.code, 409);
 });
 
 // --- Bits ledger/claims (email-based lookup) ---

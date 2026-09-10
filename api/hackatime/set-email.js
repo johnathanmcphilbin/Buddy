@@ -1,6 +1,7 @@
 import { getSession, setSession } from '../_lib/session.js';
 import { getAuthenticatedProfile } from '../_lib/hackatime-server.js';
-import { verifyOrBindEmail } from '../_lib/identity.js';
+import { getAllLedgerEntries } from '../_lib/airtable.js';
+import { emailOwnedByOther } from '../_lib/identity.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,8 +25,8 @@ export default async function handler(req, res) {
 
   try {
     const profile = await getAuthenticatedProfile(session.hackatimeAccessToken);
-    const allowed = await verifyOrBindEmail(profile.accountId, email);
-    if (!allowed) {
+    const priorEntries = await getAllLedgerEntries(email);
+    if (emailOwnedByOther(priorEntries, profile.username ?? '')) {
       res.status(409).json({ error: 'That email is already registered to a different Hackatime account.' });
       return;
     }
@@ -35,9 +36,7 @@ export default async function handler(req, res) {
       return;
     }
     console.error('set-email verification failed:', error);
-    // TEMPORARY: surfacing the real error to diagnose a live issue.
-    // Revert to the generic message once the cause is fixed.
-    res.status(502).json({ error: `Could not verify your account right now: ${error.message}` });
+    res.status(502).json({ error: 'Could not verify your account right now. Please try again.' });
     return;
   }
 

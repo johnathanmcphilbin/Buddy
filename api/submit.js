@@ -3,7 +3,7 @@ import { getSession, setSession } from './_lib/session.js';
 import { getAuthenticatedProfile, getAuthenticatedProjects } from './_lib/hackatime-server.js';
 import { createYswsSubmission, createBitsLedgerEntry, getAllLedgerEntries } from './_lib/airtable.js';
 import { sendReviewEmail } from './_lib/email.js';
-import { verifyOrBindEmail } from './_lib/identity.js';
+import { emailOwnedByOther } from './_lib/identity.js';
 
 // Until a verified sending domain is set up in Resend, review emails can
 // only go to the Resend account's own email — override with
@@ -90,20 +90,21 @@ export default async function handler(req, res) {
     }
     const hackatimeUsername = profile.username ?? '';
 
-    // Reject if this email already belongs to a different Hackatime
-    // account, so a submitter can't type someone else's email to read or
-    // add to their balance. First account to use an email owns it.
-    const emailAllowed = await verifyOrBindEmail(profile.accountId, body.email);
-    if (!emailAllowed) {
-      res.status(409).json({ error: 'That email is registered to a different Hackatime account. Use the email you originally submitted with.' });
-      return;
-    }
-
     // Someone can resubmit as they log more hours on the same project.
     // The YSWS Project Submission table gets exactly one row per project;
     // every resubmit instead adds a Buddy Bits Ledger line for just the
     // hours worked since their last submission.
     const priorEntries = await getAllLedgerEntries(body.email);
+
+    // Reject if this email already has ledger rows from a different
+    // Hackatime account, so a submitter can't type someone else's email to
+    // read or add to their balance. A brand-new email is open to whoever
+    // submits with it first.
+    if (emailOwnedByOther(priorEntries, hackatimeUsername)) {
+      res.status(409).json({ error: 'That email is registered to a different Hackatime account. Use the email you originally submitted with.' });
+      return;
+    }
+
     const priorProjectEntries = priorEntries.filter((entry) => entry.hackatimeProject === session.hackatimeProject);
     const priorHours = priorProjectEntries.reduce((sum, entry) => sum + entry.trackedHours, 0);
     const trackedHours = Math.max(0, selectedProject.hours - priorHours);

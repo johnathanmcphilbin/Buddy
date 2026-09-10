@@ -162,6 +162,7 @@ export async function getAllLedgerEntries(email) {
         trackedHours: record.fields['Tracked Hours At Submission'] ?? 0,
         reviewerNotes: record.fields['Reviewer Notes'] ?? null,
         hackatimeProject: record.fields['Hackatime Project'] ?? null,
+        hackatimeUsername: record.fields['Hackatime Username'] ?? null,
         submissionRecordId: record.fields['Submission Record ID'] ?? null
       });
     });
