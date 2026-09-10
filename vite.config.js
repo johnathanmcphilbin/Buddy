@@ -8,7 +8,7 @@ export default defineConfig({
     name: 'buddy-private-inference',
     configureServer(server) {
       const env = loadEnv(server.config.mode, process.cwd(), '');
-      for (const name of ['ROBOFLOW_API_KEY', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'ROBOFLOW_DAILY_LIMIT']) {
+      for (const name of ['ROBOFLOW_API', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'ROBOFLOW_DAILY_LIMIT']) {
         if (!process.env[name] && env[name]) process.env[name] = env[name];
       }
       server.middlewares.use('/api/roboflow', async (req, res) => {

@@ -28,7 +28,7 @@ const json = (body, ok = true) => ({ ok, status: ok ? 200 : 500, json: async () 
 let spent, claims, queriedFilters, options;
 beforeEach(() => {
   Object.assign(process.env, { SESSION_SECRET: 'security-test-only-secret-32-characters-long', RESEND_API_KEY: 'test-resend', AIRTABLE_TOKEN: 'test-airtable', AIRTABLE_BASE_ID: 'test-base',
-    UPSTASH_REDIS_REST_URL: 'https://redis.example.test', UPSTASH_REDIS_REST_TOKEN: 'test-redis', ROBOFLOW_API_KEY: 'test-private-key' });
+    UPSTASH_REDIS_REST_URL: 'https://redis.example.test', UPSTASH_REDIS_REST_TOKEN: 'test-redis', ROBOFLOW_API: 'test-private-key' });
   spent = 0; claims = []; queriedFilters = []; options = {};
   globalThis.fetch = async (url, init = {}) => {
     const target = String(url);

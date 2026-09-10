@@ -8,7 +8,7 @@ source review, not certification that the deployed service is secure.
 
 - **Exposed Roboflow private API key:** found in frontend source and reachable Git
   history. Removed from active source. The inference handler now injects
-  `ROBOFLOW_API_KEY` on the server, accepts bounded base64 images only, and returns
+  `ROBOFLOW_API` on the server, accepts bounded base64 images only, and returns
   only detection fields rather than upstream configuration/errors. Local Vite
   uses the same handler. Added a shared daily upstream-call cap (default 10,000)
   to bound paid inference abuse. Anonymous visitors can exhaust the daily quota;
@@ -62,7 +62,7 @@ source review, not certification that the deployed service is secure.
 ## Required before production activation
 
 1. **Revoke the old Roboflow key and create a new scoped key.** Save it only as
-   `ROBOFLOW_API_KEY` in Vercel and, if needed, an ignored local `.env` file. Do not
+   `ROBOFLOW_API` in Vercel and, if needed, an ignored local `.env` file. Do not
    paste it into source or chat. Rotation is required even after deleting source:
    the old value remains in Git history, old deployments and the separate nested
    `Buddy/` checkout. That untracked checkout was left unchanged. Do not deploy it.

@@ -4,7 +4,7 @@ const ROBOFLOW_WORKFLOW_URL = 'https://serverless.roboflow.com/johnathan-mcphilb
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  const apiKey = process.env.ROBOFLOW_API_KEY?.trim();
+  const apiKey = process.env.ROBOFLOW_API?.trim();
   if (!apiKey) return res.status(503).json({ error: 'Demo is temporarily unavailable.' });
   const image = req.body?.inputs?.image;
   if (image?.type !== 'base64' || typeof image.value !== 'string' || image.value.length > 2000000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(image.value)) {
