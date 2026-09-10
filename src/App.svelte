@@ -6,7 +6,6 @@
   import ShowcaseStill from './lib/ShowcaseStill.svelte';
   import BuildVisual from './lib/BuildVisual.svelte';
   import StepArrow from './lib/StepArrow.svelte';
-  import WorkedExample from './lib/WorkedExample.svelte';
   import BuddyLevel from './lib/BuddyLevel.svelte';
 
   const brandColors = ['#ec3750', '#ff8c37', '#f1c40f', '#33d6a6', '#338eda', '#a633d6'];
@@ -155,7 +154,6 @@
   </div>
   <nav aria-label="Primary">
     <a href="#how">How it works</a>
-    <a href="#example">Try a Buddy</a>
     <a href="#showcase">Ideas</a>
     <a href="#faq">FAQ</a>
     <a href="/shop.html">Shop</a>
@@ -177,8 +175,8 @@
         <p class="hero-subhead">Train it on your stuff, teach it what different situations mean, and build an assistant that talks back based on what it sees.</p>
 
         <div class="cta-wrap" bind:this={heroCta}>
-          <a class="button hero-button" href="#example" on:mouseenter={bounceCta} on:focus={bounceCta}>
-            <span>See demo</span>
+          <a class="button hero-button" href="#how" on:mouseenter={bounceCta} on:focus={bounceCta}>
+            <span>How it works</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 12h12" />
               <path d="m13 6 6 6-6 6" />
@@ -239,8 +237,6 @@
   </section>
 
   <BuddyLevel />
-
-  <WorkedExample />
 
   <section class="section showcase-section" id="showcase">
     <div class="section-shell">
