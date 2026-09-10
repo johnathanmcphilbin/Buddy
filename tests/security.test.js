@@ -25,25 +25,18 @@ function request(body = {}, email = 'attacker@example.com', token = 'test-oauth'
   return { method: 'POST', body, headers: { cookie: res.headers['Set-Cookie'].split(';')[0] } };
 }
 const json = (body, ok = true) => ({ ok, status: ok ? 200 : 500, json: async () => body });
-let spent, claims, lockOwner, queriedFilters, options;
+let spent, claims, queriedFilters, options;
 beforeEach(() => {
   Object.assign(process.env, { SESSION_SECRET: 'security-test-only-secret-32-characters-long', RESEND_API_KEY: 'test-resend', AIRTABLE_TOKEN: 'test-airtable', AIRTABLE_BASE_ID: 'test-base',
     UPSTASH_REDIS_REST_URL: 'https://redis.example.test', UPSTASH_REDIS_REST_TOKEN: 'test-redis', ROBOFLOW_API_KEY: 'test-private-key' });
-  spent = 0; claims = []; lockOwner = null; queriedFilters = []; options = {};
+  spent = 0; claims = []; queriedFilters = []; options = {};
   globalThis.fetch = async (url, init = {}) => {
     const target = String(url);
     if (target.includes('redis.example.test')) {
+      // Only the Roboflow daily-inference counter still uses Redis.
       const command = JSON.parse(init.body);
-      if (command[0] === 'SET') {
-        // Claim lock acquire: ['SET', key, owner, 'NX']
-        assert.equal(command.length, 4, 'lock must not auto-expire');
-        if (lockOwner) return json({ result: null });
-        lockOwner = command[2]; return json({ result: 'OK' });
-      }
       if (command[1].includes('INCR')) return json({ result: options.demoCount ?? 1 });
-      // Claim lock release: ['EVAL', script, '1', key, owner]
-      if (lockOwner === command[4]) lockOwner = null;
-      return json({ result: 1 });
+      throw new Error(`Unexpected redis command: ${JSON.stringify(command)}`);
     }
     if (target.endsWith('/authenticated/me')) return json({ id: options.accountId ?? 123, username: options.username ?? 'attacker', trust_factor: { trust_level: options.banned ? 'red' : 'green' } });
     if (target.endsWith('/authenticated/projects')) return json({ projects: [{ name: 'Buddy', total_seconds: options.projectSeconds ?? 36000 }] });
@@ -136,31 +129,18 @@ test('balance status with no email on record reports not submitted, without quer
   assert.equal(res.body.status, 'Not submitted'); assert.equal(res.body.balance, 0);
   assert.equal(queriedFilters.length, 0);
 });
-test('concurrent claims cannot both spend same balance', async () => {
-  const results = Array.from({ length: 12 }, response);
-  await Promise.all(results.map((res) => claim(request({ itemId: 'better-eyes' }), res)));
-  assert.equal(claims.length, 1); assert.equal(spent, 8);
-  assert.equal(results.filter((res) => res.body.claimed).length, 1);
-  assert.equal(lockOwner, null);
-});
 test('sequential repeat rejected once balance is spent', async () => {
   await claim(request({ itemId: 'better-eyes' }), response());
   const res = response(); await claim(request({ itemId: 'better-eyes' }), res);
   assert.equal(res.body.claimed, false); assert.equal(claims.length, 1);
 });
-test('ambiguous write keeps durable lock; retries cannot debit', async () => {
+test('a failed Airtable write is reported as unavailable, not claimed', async () => {
   options.writeFails = true; const res = response(); await claim(request({ itemId: 'better-eyes' }), res);
-  assert.equal(res.code, 503); assert.ok(lockOwner);
-  const retry = response(); await claim(request({ itemId: 'better-eyes' }), retry); assert.equal(retry.code, 409);
-});
-test('missing storage blocks spending', async () => {
-  delete process.env.UPSTASH_REDIS_REST_TOKEN;
-  const res = response(); await claim(request({ itemId: 'better-eyes' }), res);
   assert.equal(res.code, 503); assert.equal(claims.length, 0);
 });
-test('notification failure does not report successful debit as failed', async () => {
+test('notification failure does not report a successful debit as failed', async () => {
   options.emailFails = true; const res = response(); await claim(request({ itemId: 'better-eyes' }), res);
-  assert.equal(res.body.claimed, true); assert.equal(lockOwner, null);
+  assert.equal(res.body.claimed, true);
 });
 test('banned account rejected by server', async () => {
   options.banned = true; const res = response(); await claim(request({ itemId: 'better-eyes' }), res);

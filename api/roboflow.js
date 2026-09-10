@@ -1,4 +1,4 @@
-import { redis } from './_lib/claim-lock.js';
+import { redis } from './_lib/redis.js';
 const ROBOFLOW_WORKFLOW_URL = 'https://serverless.roboflow.com/johnathan-mcphilbin/workflows/buddy-everyday-objects';
 
 export default async function handler(req, res) {

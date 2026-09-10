@@ -35,11 +35,18 @@ source review, not certification that the deployed service is secure.
   closes reuse, not first-use squatting, and squatting now requires a visible
   fabricated submission a reviewer would see in Airtable, not just a bare
   API call.
-- **Concurrent overspending:** claims used a separate balance read and Airtable
-  write. Added a shared per-account Redis lock around the balance check, write
-  and debit visibility check. It has no expiry: an ambiguous write or crashed
-  worker leaves the account blocked for manual reconciliation, rather than
-  risking another debit. Missing storage blocks all claims.
+- **Concurrent overspending:** claims use a separate balance read and Airtable
+  write, so two claims landing in the same instant could theoretically both
+  pass the balance check before either write lands. A Redis-backed per-account
+  lock was added on 2026-09-09 to close this, then removed on 2026-09-10 by
+  explicit decision: it depended on Redis being correctly configured in
+  production, which it wasn't (see the impersonation-fix history above for
+  the same discovery), and was blocking the shop entirely. Accepted as a
+  narrow, low-severity race for a small-scale hackathon shop instead — Bits
+  are only ever granted by the organizer approving a ledger entry, so the
+  worst case is a slight over-claim caught on manual review, not a
+  participant minting their own balance. Revisit if claim volume/stakes grow
+  enough to justify depending on Redis again (verify it works this time).
 - **Editable browser balance:** removed localStorage balance loading/saving and
   the unused local purchase function. The backend remains authoritative; anyone
   can still edit their own displayed DOM, but that cannot authorize a claim.
@@ -64,12 +71,12 @@ source review, not certification that the deployed service is secure.
    already have emails that don't match their true Hackatime account, that's
    a pre-existing data-quality issue independent of this fix; reconcile
    manually if suspected.
-3. Configure a persistent, non-evicting Redis database shared by all production
-   workers, with `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Avoid
-   replica reads, expiring trial databases and automatic clearing of claim locks.
-   Keep preview deployments isolated from production storage and Airtable data.
-   Confirmed missing/broken as of 2026-09-10 (see impersonation-fix history
-   above) — verify it's actually reachable before relying on claim locking.
+3. Redis (`UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`) is now only used
+   by the Roboflow daily-inference counter (`api/roboflow.js`) — not by claims
+   or identity checks anymore, both of which were switched off Redis on
+   2026-09-10 after discovering it wasn't actually working in production.
+   Confirm it's configured if the demo's daily quota cap matters; if not, the
+   demo just 502s on the next call rather than any balance/identity risk.
 4. Set a strong random `SESSION_SECRET` of at least 32 characters. Configure
    `ROBOFLOW_DAILY_LIMIT` to the acceptable global daily request allowance.
 5. Deploy these fixes, reconnect, and verify a real approved account and a real
@@ -77,25 +84,15 @@ source review, not certification that the deployed service is secure.
    Airtable schema, live provider responses and Redis consistency were not
    exercised by the local mocked tests.
 
-## If a claim lock remains held
-
-The key is `buddy:claim:` followed by the SHA-256 hex digest of the numeric
-Hackatime user ID string. Stop/quiesce claims for that account, confirm the old
-worker cannot still write, inspect Airtable for the possibly completed debit,
-reconcile duplicates or missing records, then remove that exact lock. Never
-clear locks automatically or while the old write could still finish. Notify the
-participant about the outcome before they retry. Unfulfilled claims in Airtable
-are the source of truth if an email notification fails.
-
 ## Validation and limits
 
-- `node --test tests/security.test.js`: 25 tests, all passing. Covers the
+- `node --test tests/security.test.js`: 23 tests, all passing. Covers the
   email/account identity check (ledger-history-based, cross-account rejection
-  at both `set-email` and `submit`), server-priced claims, concurrent/
-  sequential claims, ambiguous writes, missing storage, invalid ledger
-  values, forged/expired sessions, banned accounts, secret stripping,
-  inference quota, unsafe images, email markup, and the 2-hour minimum
-  project-hours gate on submission.
+  at both `set-email` and `submit`), server-priced claims, sequential repeat
+  claims, failed-write handling, invalid ledger values, forged/expired
+  sessions, banned accounts, secret stripping, inference quota, unsafe
+  images, email markup, and the 2-hour minimum project-hours gate on
+  submission.
 - `npm run build`: passes; existing Svelte accessibility/unused-property warnings.
 - Pattern-based scan of reachable local Git history found one distinct credential
   candidate: the Roboflow key. No additional obvious credential literals found.
@@ -108,13 +105,14 @@ are the source of truth if an email notification fails.
   dependency advisories were returned. Development dependencies were not audited.
 - Submission spam/rate limiting, end-to-end retry idempotency, and broader
   penetration testing remain separate work. A repeated click after a successful
-  affordable purchase can intentionally buy another item; concurrent requests
-  cannot spend beyond the tested balance. Airtable admin edits remain trusted.
+  affordable purchase can intentionally buy another item. Concurrent requests
+  *can* both pass the balance check before either write lands (no lock — see
+  "Concurrent overspending" above); accepted as low-severity given Bits are
+  organizer-approved regardless. Airtable admin edits remain trusted.
 
 ## References
 
 - [Hackatime OAuth profile fields](https://hackatime.hackclub.com/docs/oauth/oauth-apps)
 - [Roboflow key management](https://docs.roboflow.com/developer/authentication/find-your-roboflow-api-key)
-- [Redis SET NX](https://redis.io/docs/latest/commands/set/)
 - [Upstash REST API](https://upstash.com/docs/redis/features/restapi)
 - [Svelte DOM-clobbering advisory](https://github.com/advisories/GHSA-rcqx-6q8c-2c42)
