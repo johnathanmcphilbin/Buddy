@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import RoughFrame from './lib/RoughFrame.svelte';
 
+  const MINIMUM_PROJECT_HOURS = 2;
+
   let status = { connected: false, project: null, hours: 0 };
   let isLoading = true;
   let isSubmitting = false;
@@ -185,6 +187,10 @@
               <div class="submit-locked">
                 <p>Connect Hackatime and pick your Buddy project before you can submit.</p>
                 <a class="button secondary-button" href="/#hackatime">Connect Hackatime</a>
+              </div>
+            {:else if status.hours < MINIMUM_PROJECT_HOURS}
+              <div class="submit-locked">
+                <p>Log at least {MINIMUM_PROJECT_HOURS} hours on {status.project} before you can submit. You're at {status.hours.toFixed(1)} hours so far — keep building!</p>
               </div>
             {:else}
               <form class="submit-form" on:submit={handleSubmit}>

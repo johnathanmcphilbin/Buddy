@@ -9,6 +9,8 @@ import { sendReviewEmail } from './_lib/email.js';
 // REVIEWER_EMAIL once that's sorted (e.g. johnny@hackclub.com).
 const REVIEWER_EMAIL = process.env.REVIEWER_EMAIL?.trim() || 'johnathanmcphilbin2@gmail.com';
 
+const MINIMUM_PROJECT_HOURS = 2;
+
 const REQUIRED_FIELDS = [
   'codeUrl',
   'playableUrl',
@@ -79,6 +81,10 @@ export default async function handler(req, res) {
     const selectedProject = projects.find((project) => project.name === session.hackatimeProject);
     if (!selectedProject || !Number.isFinite(selectedProject.hours) || selectedProject.hours < 0) {
       res.status(400).json({ error: 'Select a valid Hackatime project before submitting.' });
+      return;
+    }
+    if (selectedProject.hours < MINIMUM_PROJECT_HOURS) {
+      res.status(400).json({ error: `Log at least ${MINIMUM_PROJECT_HOURS} hours on this project before submitting (you have ${selectedProject.hours.toFixed(1)}).` });
       return;
     }
     const hackatimeUsername = profile.username ?? '';
