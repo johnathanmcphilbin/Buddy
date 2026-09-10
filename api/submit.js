@@ -87,7 +87,7 @@ export default async function handler(req, res) {
     // The YSWS Project Submission table gets exactly one row per project;
     // every resubmit instead adds a Buddy Bits Ledger line for just the
     // hours worked since their last submission.
-    const priorEntries = await getAllLedgerEntries(profile.accountId);
+    const priorEntries = await getAllLedgerEntries(body.email);
     const priorProjectEntries = priorEntries.filter((entry) => entry.hackatimeProject === session.hackatimeProject);
     const priorHours = priorProjectEntries.reduce((sum, entry) => sum + entry.trackedHours, 0);
     const trackedHours = Math.max(0, selectedProject.hours - priorHours);
@@ -124,7 +124,6 @@ export default async function handler(req, res) {
       }));
 
     await createBitsLedgerEntry({
-      accountId: profile.accountId,
       email: body.email,
       hackatimeUsername,
       hackatimeProject: session.hackatimeProject,
@@ -167,8 +166,6 @@ export default async function handler(req, res) {
       return;
     }
     console.error('Submission failed:', error);
-    // TEMPORARY: surfacing the real error to the organizer to diagnose a
-    // live outage. Revert to the generic message once the cause is fixed.
-    res.status(502).json({ error: `Submission could not be completed: ${error.message}` });
+    res.status(502).json({ error: 'Submission could not be completed. Please contact the organizer before retrying.' });
   }
 }

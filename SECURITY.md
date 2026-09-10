@@ -13,10 +13,13 @@ source review, not certification that the deployed service is secure.
   uses the same handler. Added a shared daily upstream-call cap (default 10,000)
   to bound paid inference abuse. Anonymous visitors can exhaust the daily quota;
   stronger bot protection may be desirable for a public launch.
-- **Account impersonation via email:** `/api/hackatime/set-email` accepted any
-  contact email, while balances and spending were looked up by that email.
-  Balances and claims now use the immutable ID returned by Hackatime's authenticated
-  `/me` endpoint. No email or display-username fallback is allowed.
+- **Account impersonation via email:** `/api/hackatime/set-email` accepts any
+  contact email, while balances and spending are looked up by that email. A fix
+  switching lookups to the immutable Hackatime account ID was deployed 2026-09-09
+  but rolled back the same day: it requires a `Hackatime User ID` field on both
+  Airtable tables that was never added, which broke all submissions and claims.
+  Reverted to email-based lookup by explicit decision — the impersonation risk
+  documented here is accepted for now, not fixed.
 - **Concurrent overspending:** claims used a separate balance read and Airtable
   write. Added a shared per-account Redis lock around the balance check, write
   and debit visibility check. It has no expiry: an ambiguous write or crashed

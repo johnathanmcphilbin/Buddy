@@ -21,24 +21,20 @@ export default async function handler(req, res) {
   let release;
   let writeUncertain = false;
   try {
-    if (process.env.BITS_ACCOUNT_IDS_MIGRATED !== 'true') {
-      return res.status(503).json({ error: 'Balances are temporarily unavailable during account verification.', balance: 0 });
-    }
     const profile = await getAuthenticatedProfile(session.hackatimeAccessToken);
     if (profile.trustLevel === 'red') return res.status(403).json({ error: 'This account cannot earn or spend Bits.' });
     release = await acquireClaimLock(profile.accountId);
     if (!release) return res.status(409).json({ error: 'A previous claim is processing or needs review. Please wait before trying again.' });
 
     const [entries, spent] = await Promise.all([
-      getAllLedgerEntries(profile.accountId),
-      getTotalSpentBits(profile.accountId)
+      getAllLedgerEntries(session.hackatimeEmail),
+      getTotalSpentBits(session.hackatimeEmail)
     ]);
     const balance = availableBits(entries, spent);
     if (balance < item.price) return res.status(200).json({ claimed: false, error: 'You need more Bits for this upgrade.', balance });
 
     writeUncertain = true;
     await createShopClaim({
-      accountId: profile.accountId,
       hackatimeUsername: profile.username,
       email: session.hackatimeEmail,
       itemTitle: item.title,
@@ -46,7 +42,7 @@ export default async function handler(req, res) {
       price: item.price
     });
     // Confirm the debit is visible before releasing the cross-worker lock.
-    const recordedSpent = await getTotalSpentBits(profile.accountId);
+    const recordedSpent = await getTotalSpentBits(session.hackatimeEmail);
     if (recordedSpent < spent + item.price) throw new Error('Debit needs reconciliation');
     writeUncertain = false;
 

@@ -17,8 +17,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (process.env.BITS_ACCOUNT_IDS_MIGRATED !== 'true') {
-      return res.status(503).json({ error: 'Balances are temporarily unavailable during account verification.', balance: 0 });
+    if (!session.hackatimeEmail) {
+      res.status(200).json({ status: 'Not submitted', approvedBits: 0, balance: 0 });
+      return;
     }
     const profile = await getAuthenticatedProfile(session.hackatimeAccessToken);
     if (profile.trustLevel === 'red') {
@@ -26,8 +27,8 @@ export default async function handler(req, res) {
       return;
     }
     const [entries, spent] = await Promise.all([
-      getAllLedgerEntries(profile.accountId),
-      getTotalSpentBits(profile.accountId)
+      getAllLedgerEntries(session.hackatimeEmail),
+      getTotalSpentBits(session.hackatimeEmail)
     ]);
 
     if (entries.length === 0) {
