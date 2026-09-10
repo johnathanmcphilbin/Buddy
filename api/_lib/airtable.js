@@ -163,7 +163,8 @@ export async function getAllLedgerEntries(email) {
         reviewerNotes: record.fields['Reviewer Notes'] ?? null,
         hackatimeProject: record.fields['Hackatime Project'] ?? null,
         hackatimeUsername: record.fields['Hackatime Username'] ?? null,
-        submissionRecordId: record.fields['Submission Record ID'] ?? null
+        submissionRecordId: record.fields['Submission Record ID'] ?? null,
+        submittedAt: record.fields['Submitted At'] ?? null
       });
     });
     offset = data.offset;

@@ -116,6 +116,23 @@ export default async function handler(req, res) {
 
     const existingSubmissionRecordId = priorProjectEntries.find((entry) => entry.submissionRecordId)?.submissionRecordId ?? null;
 
+    // Narrow (not eliminate) the double-submit race: re-read right before
+    // writing so an overlapping request that already committed the same
+    // batch of hours for this project gets caught here, rather than both
+    // writing a duplicate ledger row (and possibly a duplicate submission
+    // row too, if this is a project's first-ever submission). No lock —
+    // just shrinks the window from the whole request to this one read.
+    const recheckEntries = await getAllLedgerEntries(body.email);
+    const justSubmitted = recheckEntries.some((entry) =>
+      entry.hackatimeProject === session.hackatimeProject &&
+      Math.abs(entry.trackedHours - trackedHours) < 0.01 &&
+      entry.submittedAt && Date.now() - new Date(entry.submittedAt).getTime() < 30000
+    );
+    if (justSubmitted) {
+      res.status(409).json({ error: 'This submission is already being processed. Please wait a moment, then check your status before retrying.' });
+      return;
+    }
+
     const submissionRecordId = existingSubmissionRecordId
       ?? (await createYswsSubmission({
         codeUrl: body.codeUrl,

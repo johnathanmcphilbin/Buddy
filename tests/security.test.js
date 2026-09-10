@@ -51,7 +51,12 @@ beforeEach(() => {
         return json({ id: 'rec-test' });
       }
       queriedFilters.push(parsed.searchParams.get('filterByFormula'));
-      if (parsed.pathname.includes('Ledger')) return json({ records: options.ledgerRecords ?? [{ fields: { Status: 'Approved', 'Approved Bits': options.approved ?? 8 } }] });
+      if (parsed.pathname.includes('Ledger')) {
+        // ledgerSequence lets a test simulate state changing between two
+        // reads (e.g. an overlapping request landing in between).
+        if (options.ledgerSequence?.length) return json({ records: options.ledgerSequence.shift() });
+        return json({ records: options.ledgerRecords ?? [{ fields: { Status: 'Approved', 'Approved Bits': options.approved ?? 8 } }] });
+      }
       return json({ records: [{ fields: { 'Bits Spent': spent } }] });
     }
     if (target.includes('api.resend.com')) {
@@ -193,4 +198,17 @@ test('submission below the minimum project hours is rejected', async () => {
   body.codeUrl = 'https://example.com'; body.playableUrl = 'https://example.com';
   const res = response(); await submit(request(body), res);
   assert.equal(res.code, 400);
+});
+test('an overlapping duplicate submission is caught before writing a second ledger row', async () => {
+  // First read (no prior entries yet) lets the submission past the
+  // "no new hours" check; the re-check right before writing sees an
+  // overlapping request that already landed for the same project/hours.
+  options.ledgerSequence = [
+    [],
+    [{ fields: { 'Hackatime Project': 'Buddy', 'Tracked Hours At Submission': 10, 'Submitted At': new Date().toISOString() } }]
+  ];
+  const body = Object.fromEntries(['codeUrl', 'playableUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
+  body.codeUrl = 'https://example.com'; body.playableUrl = 'https://example.com';
+  const res = response(); await submit(request(body), res);
+  assert.equal(res.code, 409);
 });

@@ -47,6 +47,17 @@ source review, not certification that the deployed service is secure.
   worst case is a slight over-claim caught on manual review, not a
   participant minting their own balance. Revisit if claim volume/stakes grow
   enough to justify depending on Redis again (verify it works this time).
+- **Duplicate submission race (2026-09-10):** the same shape of race exists in
+  `/api/submit` — two overlapping requests for the same project could both
+  read the prior ledger state, compute the same "new hours since last
+  submission" delta, and each write a separate Pending ledger row for the
+  same batch of hours (and, if it's the project's first-ever submission,
+  even a duplicate YSWS submission row). By explicit decision, no Redis lock
+  was added; instead `submit.js` re-reads ledger entries immediately before
+  writing and rejects with a 409 if a matching project/hours/recent-timestamp
+  entry already exists. This narrows the race to the gap between that
+  re-read and the write, rather than eliminating it — still worth checking
+  the ledger for accidental duplicate rows before mass-approving.
 - **Editable browser balance:** removed localStorage balance loading/saving and
   the unused local purchase function. The backend remains authoritative; anyone
   can still edit their own displayed DOM, but that cannot authorize a claim.
@@ -86,12 +97,14 @@ source review, not certification that the deployed service is secure.
 
 ## Validation and limits
 
-- `node --test tests/security.test.js`: 23 tests, all passing. Covers the
+- `node --test tests/security.test.js`: 25 tests, all passing. Covers the
   email/account identity check (ledger-history-based, cross-account rejection
   at both `set-email` and `submit`), server-priced claims, sequential repeat
   claims, failed-write handling, invalid ledger values, forged/expired
-  sessions, banned accounts, secret stripping, inference quota, unsafe
-  images, email markup, and the 2-hour minimum project-hours gate on
+  sessions, banned accounts, secret stripping, inference quota (including
+  fail-open behavior when Redis is unavailable), unsafe images, email
+  markup, the overlapping-duplicate-submission guard, and the 2-hour
+  minimum project-hours gate on
   submission.
 - `npm run build`: passes; existing Svelte accessibility/unused-property warnings.
 - Pattern-based scan of reachable local Git history found one distinct credential
