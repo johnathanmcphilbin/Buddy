@@ -202,6 +202,7 @@
                 <label class="submit-field">
                   <span>Playable URL</span>
                   <input type="url" bind:value={playableUrl} placeholder="Link to your demo video or a live version" required disabled={isSubmitting} />
+                  <span class="submit-field-hint">Must be a public, permanent URL with no login required. Not Streamlit — use Nest, Railway, Render, or Vercel instead.</span>
                 </label>
 
                 <label class="submit-field">
