@@ -10,19 +10,32 @@ export default async function handler(req, res) {
   if (image?.type !== 'base64' || typeof image.value !== 'string' || image.value.length > 2000000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(image.value)) {
     return res.status(400).json({ error: 'A base64 image is required.' });
   }
+  // Best-effort daily cap: if Redis isn't reachable, don't block the whole
+  // demo over a quota check that has nothing to do with whether inference
+  // itself works.
   try {
     const limit = Number(process.env.ROBOFLOW_DAILY_LIMIT || 10000);
-    if (!Number.isSafeInteger(limit) || limit <= 0) throw new Error('Invalid demo limit');
-    const count = await redis(['EVAL', "local n = redis.call('INCR', KEYS[1]); if n == 1 then redis.call('EXPIRE', KEYS[1], 172800) end; return n", '1', `buddy:inference:${new Date().toISOString().slice(0, 10)}`]);
-    if (!Number.isSafeInteger(count) || count <= 0) throw new Error('Invalid demo counter');
-    if (count > limit) return res.status(429).json({ error: 'Demo daily limit reached. Please try again tomorrow.' });
+    if (Number.isSafeInteger(limit) && limit > 0) {
+      const count = await redis(['EVAL', "local n = redis.call('INCR', KEYS[1]); if n == 1 then redis.call('EXPIRE', KEYS[1], 172800) end; return n", '1', `buddy:inference:${new Date().toISOString().slice(0, 10)}`]);
+      if (Number.isSafeInteger(count) && count > limit) {
+        return res.status(429).json({ error: 'Demo daily limit reached. Please try again tomorrow.' });
+      }
+    }
+  } catch (error) {
+    console.error('Roboflow daily quota check unavailable, allowing request:', error.message);
+  }
+
+  try {
     const upstreamResponse = await fetch(ROBOFLOW_WORKFLOW_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ api_key: apiKey, inputs: { image: { type: 'base64', value: image.value } } }),
       signal: AbortSignal.timeout(15000)
     });
-    if (!upstreamResponse.ok) throw new Error('Inference failed');
+    if (!upstreamResponse.ok) {
+      const body = await upstreamResponse.text();
+      throw new Error(`Roboflow request failed (${upstreamResponse.status}): ${body}`);
+    }
     const data = await upstreamResponse.json();
     // Only return detection fields needed by the browser, never upstream config.
     const detections = [];
@@ -36,7 +49,8 @@ export default async function handler(req, res) {
     }
     collect(data);
     return res.status(200).json({ predictions: detections });
-  } catch {
+  } catch (error) {
+    console.error('Roboflow inference failed:', error.message);
     return res.status(502).json({ error: 'Roboflow request failed' });
   }
 }

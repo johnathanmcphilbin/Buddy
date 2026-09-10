@@ -169,6 +169,11 @@ test('inference budget caps upstream paid calls', async () => {
   options.demoCount = 10001; const res = response(); await roboflow({ method: 'POST', body: { inputs: { image: { type: 'base64', value: 'YWJj' } } } }, res);
   assert.equal(res.code, 429); assert.equal(options.upstream, undefined);
 });
+test('inference still works when the quota counter is unavailable', async () => {
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  const res = response(); await roboflow({ method: 'POST', body: { inputs: { image: { type: 'base64', value: 'YWJj' } } } }, res);
+  assert.equal(res.code, 200); assert.equal(res.body.predictions[0].class, 'MOUSE');
+});
 test('image URLs and oversized images rejected', async () => {
   for (const image of [{ type: 'url', value: 'https://example.com' }, { type: 'base64', value: 'a'.repeat(2000001) }]) {
     const res = response(); await roboflow({ method: 'POST', body: { inputs: { image } } }, res); assert.equal(res.code, 400);
