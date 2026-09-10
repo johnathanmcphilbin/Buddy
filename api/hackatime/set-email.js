@@ -34,7 +34,10 @@ export default async function handler(req, res) {
       res.status(401).json({ error: 'Your Hackatime session expired. Reconnect Hackatime and try again.' });
       return;
     }
-    res.status(502).json({ error: 'Could not verify your account right now. Please try again.' });
+    console.error('set-email verification failed:', error);
+    // TEMPORARY: surfacing the real error to diagnose a live issue.
+    // Revert to the generic message once the cause is fixed.
+    res.status(502).json({ error: `Could not verify your account right now: ${error.message}` });
     return;
   }
 
