@@ -114,7 +114,6 @@ async function uploadScreenshot(recordId, screenshot) {
 export async function createBitsLedgerEntry(entry) {
   const fields = {
     'Submitter Email': entry.email,
-    'Hackatime User ID': entry.accountId,
     'Hackatime Username': entry.hackatimeUsername,
     'Hackatime Project': entry.hackatimeProject,
     'Tracked Hours At Submission': entry.trackedHours,
@@ -131,36 +130,51 @@ export async function createBitsLedgerEntry(entry) {
   return data.id;
 }
 
-// Account ownership comes from the authenticated provider, never a contact email.
-function accountFilter(accountId) {
-  if (typeof accountId !== 'string' || !/^[1-9][0-9]*$/.test(accountId)) throw new Error('Missing account identity');
-  return `{Hackatime User ID} = "${accountId}"`;
+function emailFilter(email) {
+  if (typeof email !== 'string' || !email.trim()) throw new Error('Missing email identity');
+  return `LOWER({Submitter Email}) = "${email.toLowerCase().replace(/"/g, '\\"')}"`;
 }
 
-export async function getLatestLedgerEntry(accountId) {
-  const filterFormula = accountFilter(accountId);
+// Every ledger entry this email has ever submitted, oldest first. Each
+// entry's "Tracked Hours At Submission" is the NEW hours logged since the
+// previous submission for that project (a delta, not a running total) —
+// resubmitting as you build more hours adds another line rather than
+// replacing the last one, so a reviewer can approve each batch of hours
+// independently and the balance is the sum of every Approved entry.
+export async function getAllLedgerEntries(email) {
+  const filterFormula = emailFilter(email);
   const params = new URLSearchParams({
     filterByFormula: filterFormula,
     'sort[0][field]': 'Submitted At',
-    'sort[0][direction]': 'desc',
-    maxRecords: '1'
+    'sort[0][direction]': 'asc'
   });
 
-  const data = await airtableRequest(`${encodeURIComponent(LEDGER_TABLE)}?${params.toString()}`);
-  const record = data.records?.[0];
-  if (!record) return null;
+  const entries = [];
+  let offset;
 
-  return {
-    status: record.fields.Status ?? 'Pending',
-    approvedBits: record.fields['Approved Bits'] ?? null,
-    trackedHours: record.fields['Tracked Hours At Submission'] ?? 0,
-    reviewerNotes: record.fields['Reviewer Notes'] ?? null
-  };
+  do {
+    if (offset) params.set('offset', offset);
+    const data = await airtableRequest(`${encodeURIComponent(LEDGER_TABLE)}?${params.toString()}`);
+    (data.records ?? []).forEach((record) => {
+      entries.push({
+        status: record.fields.Status ?? 'Pending',
+        approvedBits: record.fields['Approved Bits'] ?? null,
+        trackedHours: record.fields['Tracked Hours At Submission'] ?? 0,
+        reviewerNotes: record.fields['Reviewer Notes'] ?? null,
+        hackatimeProject: record.fields['Hackatime Project'] ?? null,
+        hackatimeUsername: record.fields['Hackatime Username'] ?? null,
+        submissionRecordId: record.fields['Submission Record ID'] ?? null,
+        submittedAt: record.fields['Submitted At'] ?? null
+      });
+    });
+    offset = data.offset;
+  } while (offset);
+
+  return entries;
 }
 
 export async function createShopClaim(claim) {
   const fields = {
-    'Hackatime User ID': claim.accountId,
     'Hackatime Username': claim.hackatimeUsername,
     'Submitter Email': claim.email,
     'Item Title': claim.itemTitle,
@@ -181,8 +195,8 @@ export async function createShopClaim(claim) {
 // Sum of every claim a participant has made so far, so the real balance
 // is (approved Bits) minus (everything they've spent) — never something
 // the browser can adjust on its own.
-export async function getTotalSpentBits(accountId) {
-  const filterFormula = accountFilter(accountId);
+export async function getTotalSpentBits(email) {
+  const filterFormula = emailFilter(email);
   const params = new URLSearchParams({ filterByFormula: filterFormula });
 
   let total = 0;

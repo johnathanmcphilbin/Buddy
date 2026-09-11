@@ -188,6 +188,18 @@ h3 {
   font-weight: 500;
 }
 
+.level-lede-note {
+  font-size: clamp(0.9rem, 1.4vw, 1rem);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.level-lede-note a {
+  color: var(--red);
+  font-weight: 800;
+  text-decoration: underline;
+}
+
 .cta-wrap {
   display: inline-flex;
 }
@@ -302,6 +314,7 @@ h3 {
   bottom: clamp(-18px, -3vw, -10px);
   width: clamp(72px, 10vw, 108px);
   height: clamp(72px, 10vw, 108px);
+  object-fit: contain;
   filter: drop-shadow(0 6px 0 rgba(38, 50, 77, 0.14));
   transform: rotate(-6deg);
 }
@@ -346,9 +359,26 @@ h3 {
 }
 
 .section-heading {
+  position: relative;
   display: grid;
   gap: 16px;
   margin-bottom: clamp(34px, 6vw, 64px);
+}
+
+.heading-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.heading-sticker {
+  width: clamp(40px, 4.5vw, 56px);
+  height: clamp(40px, 4.5vw, 56px);
+  object-fit: contain;
+  filter: drop-shadow(0 4px 0 rgba(38, 50, 77, 0.14));
+  transform: rotate(-8deg);
+  flex-shrink: 0;
 }
 
 .split-heading {
@@ -519,25 +549,43 @@ h3 {
   padding-bottom: clamp(48px, 6vw, 76px);
 }
 
+.level-top-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.7fr) minmax(360px, 1.3fr);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: center;
+}
+
+.level-intro-col {
+  display: grid;
+  gap: 18px;
+  justify-items: start;
+}
+
 .level-heading {
   display: grid;
-  justify-items: center;
+  justify-items: start;
   gap: 10px;
-  text-align: center;
-  max-width: 620px;
-  margin: 0 auto;
+  text-align: left;
+  max-width: 480px;
+}
+
+.level-diagram-col {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
 }
 
 .level-base-card {
-  margin: 22px auto 0;
+  margin: 0;
   width: fit-content;
+}
+
+.level-base-card-inner {
   display: grid;
   justify-items: center;
   gap: 2px;
   padding: 10px 22px;
-  border: 2px solid var(--ink);
-  border-radius: 14px;
-  background: var(--paper-soft);
 }
 
 .level-base-tag {
@@ -558,11 +606,20 @@ h3 {
   font-weight: 600;
 }
 
+.level-tutorial-link {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--red);
+  text-decoration: underline;
+}
+
 .level-diagram {
   position: relative;
-  width: min(100%, 720px);
-  height: clamp(320px, 34vw, 420px);
-  margin: 30px auto 0;
+  width: 100%;
+  max-width: 620px;
+  height: clamp(320px, 32vw, 400px);
+  margin: 0 auto;
 }
 
 .level-lines {
@@ -728,12 +785,36 @@ h3 {
   font-size: 0.9rem;
 }
 
+@media (max-width: 860px) {
+  .level-top-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .level-intro-col {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .level-heading {
+    justify-items: center;
+    text-align: center;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .level-base-card {
+    justify-items: center;
+    margin: 0 auto;
+  }
+}
+
 @media (max-width: 640px) {
   .level-diagram {
     height: auto;
     display: grid;
     justify-items: center;
     gap: 10px;
+    max-width: none;
   }
 
   .level-lines {

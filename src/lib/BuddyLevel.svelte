@@ -1,5 +1,8 @@
 <script>
+  import { onMount, tick } from 'svelte';
   import Mascot from './Mascot.svelte';
+  import HackatimeConnect from './HackatimeConnect.svelte';
+  import RoughFrame from './RoughFrame.svelte';
   import { purchasedUpgrades, buddyLevel } from './buddyStore.js';
 
   const upgrades = [
@@ -14,45 +17,100 @@
     { id: 'more-senses', label: 'MORE SENSES', icon: 'senses', accent: '#338eda' },
     { id: 'training-power', label: 'TRAINING POWER', icon: 'training', accent: '#33d6a6' }
   ];
+
+  let diagramEl;
+  let buddyEl;
+  let tagEls = [];
+  let viewW = 0;
+  let viewH = 0;
+  let linePaths = upgrades.map(() => '');
+
+  function updateLines() {
+    if (!diagramEl || !buddyEl) return;
+    const rect = diagramEl.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    viewW = rect.width;
+    viewH = rect.height;
+
+    const buddyRect = buddyEl.getBoundingClientRect();
+    const bx = buddyRect.left + buddyRect.width / 2 - rect.left;
+    const by = buddyRect.top + buddyRect.height / 2 - rect.top;
+
+    linePaths = tagEls.map((el) => {
+      if (!el) return '';
+      const tagRect = el.getBoundingClientRect();
+      const tx = tagRect.left + tagRect.width / 2 - rect.left;
+      const ty = tagRect.top + tagRect.height / 2 - rect.top;
+      const mx = (bx + tx) / 2;
+      const my = (by + ty) / 2;
+      return `M${bx} ${by} Q ${mx} ${my} ${tx} ${ty}`;
+    });
+  }
+
+  onMount(() => {
+    let frame;
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updateLines);
+    };
+
+    tick().then(updateLines);
+
+    const resizeObserver = new ResizeObserver(scheduleUpdate);
+    resizeObserver.observe(diagramEl);
+    window.addEventListener('resize', scheduleUpdate);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', scheduleUpdate);
+    };
+  });
 </script>
 
 <section class="section buddy-level-section" id="buddy-level">
   <div class="section-shell">
-    <div class="level-heading">
-      <p class="eyebrow">BUDDY LEVEL</p>
-      <h2>How upgraded is your Buddy?</h2>
-      <p class="section-lede">Every Buddy starts at Level 1 once it can see, understand, and talk. Every upgrade you add after that pushes it up another level.</p>
-    </div>
+    <div class="level-top-layout">
+      <div class="level-intro-col">
+        <div class="level-heading">
+          <p class="eyebrow">BUDDY LEVEL</p>
+          <h2>How upgraded is your Buddy?</h2>
+          <p class="section-lede">Every Buddy starts at Level 1 once it can see, understand, and talk. Every upgrade you add after that pushes it up another level.</p>
+          <p class="section-lede level-lede-note">Upgrades cost Bits, and Bits come from hours you submit and get approved. <a href="/submit.html">Submit your build</a> to earn Bits, then spend them in the <a href="/shop.html">shop</a>.</p>
+        </div>
 
-    <div class="level-base-card">
-      <span class="level-base-tag">LEVEL 1</span>
-      <span class="level-base-title">BASE BUDDY</span>
-      <p class="level-base-desc">Sees. Understands. Talks.</p>
-    </div>
-
-    <div class="level-diagram">
-      <svg class="level-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M12 12 C 22 20, 34 30, 45 42" fill="none" stroke="#ec3750" stroke-width="0.5" stroke-linecap="round" />
-        <path d="M36 5 C 38 16, 42 26, 47 40" fill="none" stroke="#a633d6" stroke-width="0.5" stroke-linecap="round" />
-        <path d="M64 5 C 62 16, 58 26, 53 40" fill="none" stroke="#ff8c37" stroke-width="0.5" stroke-linecap="round" />
-        <path d="M88 12 C 78 20, 66 30, 55 42" fill="none" stroke="#f1c40f" stroke-width="0.5" stroke-linecap="round" />
-        <path d="M4 50 C 18 50, 30 50, 42 50" fill="none" stroke="#338eda" stroke-width="0.5" stroke-linecap="round" />
-        <path d="M96 50 C 82 50, 70 50, 58 50" fill="none" stroke="#a633d6" stroke-width="0.5" stroke-linecap="round" />
-        <path d="M12 88 C 22 80, 34 70, 45 58" fill="none" stroke="#33d6a6" stroke-width="0.5" stroke-linecap="round" />
-        <path d="M36 95 C 38 84, 42 74, 47 60" fill="none" stroke="#ec3750" stroke-width="0.5" stroke-linecap="round" />
-        <path d="M64 95 C 62 84, 58 74, 53 60" fill="none" stroke="#338eda" stroke-width="0.5" stroke-linecap="round" />
-        <path d="M88 88 C 78 80, 66 70, 55 58" fill="none" stroke="#33d6a6" stroke-width="0.5" stroke-linecap="round" />
-      </svg>
-
-      <div class="level-buddy">
-        <Mascot state="idle" size={116} />
+        <HackatimeConnect />
       </div>
 
-      {#each upgrades as upgrade, index (upgrade.id)}
+      <div class="level-diagram-col">
+        <div class="level-base-card">
+          <RoughFrame stroke="#26324d" fill="#fffdf6" seed={19} radius={16} roughness={1.9}>
+            <div class="level-base-card-inner">
+              <span class="level-base-tag">LEVEL 1</span>
+              <span class="level-base-title">BASE BUDDY</span>
+              <p class="level-base-desc">Sees. Understands. Talks.</p>
+              <a class="level-tutorial-link" href="/docs/buddy-level-1-tutorial.pdf" download>Download the Level 1 build guide (PDF) →</a>
+            </div>
+          </RoughFrame>
+        </div>
+
+        <div class="level-diagram" bind:this={diagramEl}>
+        <svg class="level-lines" viewBox={`0 0 ${viewW} ${viewH}`} aria-hidden="true">
+          {#each upgrades as upgrade, index (upgrade.id)}
+            <path d={linePaths[index]} fill="none" stroke={upgrade.accent} stroke-width="1.5" stroke-linecap="round" />
+          {/each}
+        </svg>
+
+        <div class="level-buddy" bind:this={buddyEl}>
+          <Mascot state="idle" size={116} />
+        </div>
+
+        {#each upgrades as upgrade, index (upgrade.id)}
         <div
           class={`level-tag level-tag-${index + 1}`}
           class:active={$purchasedUpgrades.includes(upgrade.id)}
           style={`--accent:${upgrade.accent}`}
+          bind:this={tagEls[index]}
         >
           <span class="level-tag-icon">
             {#if upgrade.icon === 'eyes'}
@@ -119,6 +177,8 @@
           <span class="level-tag-label">{upgrade.label}</span>
         </div>
       {/each}
+        </div>
+      </div>
     </div>
 
     <div class="level-status">

@@ -6,9 +6,7 @@
   import ShowcaseStill from './lib/ShowcaseStill.svelte';
   import BuildVisual from './lib/BuildVisual.svelte';
   import StepArrow from './lib/StepArrow.svelte';
-  import WorkedExample from './lib/WorkedExample.svelte';
   import BuddyLevel from './lib/BuddyLevel.svelte';
-  import HackatimeConnect from './lib/HackatimeConnect.svelte';
 
   const brandColors = ['#ec3750', '#ff8c37', '#f1c40f', '#33d6a6', '#338eda', '#a633d6'];
 
@@ -160,7 +158,6 @@
   </div>
   <nav aria-label="Primary">
     <a href="#how">How it works</a>
-    <a href="#example">Try a Buddy</a>
     <a href="#showcase">Ideas</a>
     <a href="#faq">FAQ</a>
     <a href="/shop.html">Shop</a>
@@ -182,8 +179,8 @@
         <p class="hero-subhead">Train it on your stuff, teach it what different situations mean, and build an assistant that talks back based on what it sees.</p>
 
         <div class="cta-wrap" bind:this={heroCta}>
-          <a class="button hero-button" href="#example" on:mouseenter={bounceCta} on:focus={bounceCta}>
-            <span>See demo</span>
+          <a class="button hero-button" href="#how" on:mouseenter={bounceCta} on:focus={bounceCta}>
+            <span>How it works</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 12h12" />
               <path d="m13 6 6 6-6 6" />
@@ -216,7 +213,7 @@
             ></video>
           </div>
         </RoughFrame>
-        <img class="hero-buddy-badge" src="/images/buddy.png" alt="Buddy" />
+        <img class="hero-buddy-badge" src="/images/buddy-excited.png" alt="Buddy" />
       </div>
     </div>
   </section>
@@ -225,7 +222,10 @@
     <div class="section-shell">
       <div class="section-heading">
         <p class="eyebrow">HOW IT WORKS</p>
-        <h2>From photos to a talking Buddy.</h2>
+        <div class="heading-row">
+          <h2>From photos to a talking Buddy.</h2>
+          <img class="heading-sticker" src="/images/buddy-glasses.png" alt="" aria-hidden="true" />
+        </div>
         <p class="section-lede">You’ll train your own object detector in Roboflow, plug it into a starter webpage, then write the logic that gives Buddy something to say.</p>
       </div>
 
@@ -251,18 +251,17 @@
     </div>
   </section>
 
-  <HackatimeConnect />
-
   <BuddyLevel />
-
-  <WorkedExample />
 
   <section class="section showcase-section" id="showcase">
     <div class="section-shell">
       <div class="section-heading split-heading">
         <div>
           <p class="eyebrow">IDEAS TO STEAL</p>
-          <h2>What could your Buddy do?</h2>
+          <div class="heading-row">
+            <h2>What could your Buddy do?</h2>
+            <img class="heading-sticker" src="/images/buddy-star.png" alt="" aria-hidden="true" />
+          </div>
         </div>
         <p class="section-lede">Here are a few things you could build. Start with one of these, remix it, or make something completely different.</p>
       </div>
@@ -326,5 +325,6 @@
     <a href="https://hackclub.com">Hack Club</a>
     <a href="https://hackclub.com/privacy-and-terms">Privacy &amp; Terms</a>
     <a href="https://github.com/johnathanmcphilbin/Buddy" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://callum-moody.carrd.co/" target="_blank" rel="noopener">Art by Callum Moody</a>
   </div>
 </footer>

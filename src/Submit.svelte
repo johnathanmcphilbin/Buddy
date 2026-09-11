@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import RoughFrame from './lib/RoughFrame.svelte';
 
+  const MINIMUM_PROJECT_HOURS = 2;
+
   let status = { connected: false, project: null, hours: 0 };
   let isLoading = true;
   let isSubmitting = false;
@@ -146,7 +148,10 @@
   <section class="section submit-top">
     <div class="section-shell submit-top-shell">
       <p class="eyebrow">SUBMIT BUDDY</p>
-      <h1>Submit your Buddy.</h1>
+      <div class="heading-row">
+        <h1>Submit your Buddy.</h1>
+        <img class="heading-sticker" src="/images/buddy-glasses.png" alt="" aria-hidden="true" />
+      </div>
       <p class="submit-subhead">A working live webcam demo, your Roboflow project or dataset, and a short video showing Buddy detecting multiple objects and speaking different responses based on what it sees.</p>
 
       {#if !isLoading}
@@ -183,6 +188,10 @@
                 <p>Connect Hackatime and pick your Buddy project before you can submit.</p>
                 <a class="button secondary-button" href="/#hackatime">Connect Hackatime</a>
               </div>
+            {:else if status.hours < MINIMUM_PROJECT_HOURS}
+              <div class="submit-locked">
+                <p>Log at least {MINIMUM_PROJECT_HOURS} hours on {status.project} before you can submit. You're at {status.hours.toFixed(1)} hours so far — keep building!</p>
+              </div>
             {:else}
               <form class="submit-form" on:submit={handleSubmit}>
                 <label class="submit-field">
@@ -193,6 +202,7 @@
                 <label class="submit-field">
                   <span>Playable URL</span>
                   <input type="url" bind:value={playableUrl} placeholder="Link to your demo video or a live version" required disabled={isSubmitting} />
+                  <span class="submit-field-hint">Must be a public, permanent URL with no login required. Not Streamlit; use Nest, Railway, Render, or Vercel instead.</span>
                 </label>
 
                 <label class="submit-field">
@@ -305,6 +315,7 @@
     <a href="https://hackclub.com">Hack Club</a>
     <a href="https://hackclub.com/privacy-and-terms">Privacy &amp; Terms</a>
     <a href="https://github.com/johnathanmcphilbin/Buddy" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://callum-moody.carrd.co/" target="_blank" rel="noopener">Art by Callum Moody</a>
   </div>
 </footer>
 

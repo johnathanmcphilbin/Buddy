@@ -1,8 +1,11 @@
 import { getSession, setSession } from '../_lib/session.js';
+import { getAuthenticatedProfile } from '../_lib/hackatime-server.js';
+import { getAllLedgerEntries } from '../_lib/airtable.js';
+import { emailOwnedByOther } from '../_lib/identity.js';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -17,6 +20,23 @@ export default function handler(req, res) {
   const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
   if (!email || !EMAIL_PATTERN.test(email) || email.length > 254) {
     res.status(400).json({ error: 'Enter a valid email address.' });
+    return;
+  }
+
+  try {
+    const profile = await getAuthenticatedProfile(session.hackatimeAccessToken);
+    const priorEntries = await getAllLedgerEntries(email);
+    if (emailOwnedByOther(priorEntries, profile.username ?? '')) {
+      res.status(409).json({ error: 'That email is already registered to a different Hackatime account.' });
+      return;
+    }
+  } catch (error) {
+    if (error.code === 'UNAUTHORIZED') {
+      res.status(401).json({ error: 'Your Hackatime session expired. Reconnect Hackatime and try again.' });
+      return;
+    }
+    console.error('set-email verification failed:', error);
+    res.status(502).json({ error: 'Could not verify your account right now. Please try again.' });
     return;
   }
 

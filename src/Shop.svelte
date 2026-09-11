@@ -14,7 +14,7 @@
         {
           id: 'better-eyes',
           title: 'Give Buddy Better Eyes',
-          item: 'Logitech C270 Webcam',
+          item: 'Webcam Grant',
           price: 8,
           reason: 'Point Buddy somewhere your laptop can’t.',
           build: 'Point Buddy at your desk, doorway, shelf, or anywhere your laptop can’t.',
@@ -174,7 +174,9 @@
 
   onMount(loadBalance);
 
-  $: visibleBranches = branches.filter((branch) => activeCategory === 'ALL' || branch.key === activeCategory);
+  $: visibleItems = branches
+    .filter((branch) => activeCategory === 'ALL' || branch.key === activeCategory)
+    .flatMap((branch) => branch.items.map((item) => ({ ...item, category: branch.key, accent: branch.accent })));
 
   function openClaim(item) {
     if (!hackatimeConnected) {
@@ -239,11 +241,14 @@
   <section class="shop-top">
     <div class="section-shell shop-top-shell">
       <p class="eyebrow">BUDDY SHOP</p>
-      <h1>Upgrade your Buddy.</h1>
+      <div class="heading-row">
+        <h1>Upgrade your Buddy.</h1>
+        <img class="heading-sticker" src="/images/buddy-star.png" alt="" aria-hidden="true" />
+      </div>
       <p class="shop-subhead">Every hour you build earns you 1 Bit. Spend your Bits on things that make Buddy see, think, hear, and do more.</p>
 
       <p class="shop-rate">1 HOUR = 1 BIT</p>
-      <p class="shop-tracking">Tracked with Lapse and Hackatime.</p>
+      <p class="shop-tracking">Tracked with <a href="https://lapse.hackclub.com/" target="_blank" rel="noopener">Lapse</a> and Hackatime.</p>
 
       <div class="balance-readout">
         <RoughFrame stroke="#26324d" fill="#fffdf6" seed={12} radius={22} roughness={2}>
@@ -270,94 +275,53 @@
           </button>
         {/each}
       </nav>
+
+      <a class="submit-callout" href="/submit.html">
+        <RoughFrame stroke="#ec3750" fill="#fff5f2" seed={31} radius={18} roughness={1.9}>
+          <span class="submit-callout-inner">Go to <strong>Submit</strong> to get your Bits! →</span>
+        </RoughFrame>
+      </a>
     </div>
   </section>
 
-  <section class="shop-tree-section">
+  <section class="shop-catalog-section">
     <div class="section-shell">
-      <div class="shop-tree">
-        <div class="buddy-node">
-          <RoughFrame stroke="#26324d" fill="#ffffff" seed={5} radius={28} roughness={1.8}>
-            <span class="buddy-node-label">BUDDY</span>
-          </RoughFrame>
-        </div>
+      <div class="shop-catalog">
+        {#each visibleItems as upgrade (upgrade.id)}
+          <article class="upgrade-card">
+            <RoughFrame stroke={upgrade.accent} fill="#ffffff" seed={upgrade.price + 20} radius={20} roughness={2}>
+              <div class="upgrade-inner">
+                <span class="upgrade-category" style={`--accent:${upgrade.accent}`}>{upgrade.category}</span>
+                <h3>{upgrade.title}</h3>
+                <p class="upgrade-item">{upgrade.item}</p>
+                <span class="upgrade-price" style={`--accent:${upgrade.accent}`}>{upgrade.price} BITS</span>
+                <p class="upgrade-reason">{upgrade.reason}</p>
 
-        <div class="branch-row">
-          {#each visibleBranches as branch (branch.key)}
-            <div class="branch">
-              <svg class="branch-connector" viewBox="0 0 20 60" aria-hidden="true">
-                <path
-                  d="M10 2 C 8 16, 12 24, 10 38 C 8 48, 11 52, 10 58"
-                  fill="none"
-                  stroke={branch.accent}
-                  stroke-width="2.4"
-                  stroke-linecap="round"
-                />
-              </svg>
+                <button type="button" class="button claim-button" style={`--accent:${upgrade.accent}`} on:click={() => openClaim(upgrade)}>
+                  CLAIM UPGRADE
+                </button>
 
-              <div class="branch-header">
-                <span class="branch-icon" style={`--accent:${branch.accent}`}>
-                  {#if branch.icon === 'eyes'}
-                    <svg viewBox="0 0 32 32" aria-hidden="true">
-                      <path d="M3 16c4-7 22-7 26 0-4 7-22 7-26 0Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" />
-                      <circle cx="16" cy="16" r="4.5" fill="none" stroke="currentColor" stroke-width="2.2" />
-                    </svg>
-                  {:else if branch.icon === 'brain'}
-                    <svg viewBox="0 0 32 32" aria-hidden="true">
-                      <path
-                        d="M12 5c-4 0-6 3-5.6 6.2C4.4 12.4 4 15 6 16.8c-1 2 0 4.6 2.6 5.4C9 24.4 11 26 13.5 26c1.2 0 2-.5 2.5-1.2M20 5c4 0 6 3 5.6 6.2 2 1.2 2.4 3.8.4 5.6 1 2 0 4.6-2.6 5.4C23 24.4 21 26 18.5 26c-1.2 0-2-.5-2.5-1.2M16 6v18"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  {:else if branch.icon === 'voice'}
-                    <svg viewBox="0 0 32 32" aria-hidden="true">
-                      <rect x="12" y="4" width="8" height="16" rx="4" fill="none" stroke="currentColor" stroke-width="2.2" />
-                      <path d="M8 16c0 4.4 3.6 8 8 8s8-3.6 8-8M16 24v4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
-                    </svg>
-                  {:else}
-                    <svg viewBox="0 0 32 32" aria-hidden="true">
-                      <circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" stroke-width="2.2" />
-                      <path d="M5 16h22M16 5c3.5 3 3.5 19 0 22M16 5c-3.5 3-3.5 19 0 22" fill="none" stroke="currentColor" stroke-width="2" />
-                    </svg>
-                  {/if}
-                </span>
-                <h2>{branch.key}</h2>
+                <div class="upgrade-build">
+                  <span class="upgrade-build-label">WHAT COULD I BUILD WITH THIS?</span>
+                  <p>{upgrade.build}</p>
+                </div>
               </div>
-
-              <div class="branch-items">
-                {#each branch.items as upgrade}
-                  <article class="upgrade-card">
-                    <RoughFrame stroke={branch.accent} fill="#ffffff" seed={upgrade.price + 20} radius={20} roughness={2}>
-                      <div class="upgrade-inner">
-                        <h3>{upgrade.title}</h3>
-                        <p class="upgrade-item">{upgrade.item}</p>
-                        <span class="upgrade-price" style={`--accent:${branch.accent}`}>{upgrade.price} BITS</span>
-                        <p class="upgrade-reason">{upgrade.reason}</p>
-
-                        <button type="button" class="button claim-button" style={`--accent:${branch.accent}`} on:click={() => openClaim(upgrade)}>
-                          CLAIM UPGRADE
-                        </button>
-
-                        <div class="upgrade-build">
-                          <span class="upgrade-build-label">WHAT COULD I BUILD WITH THIS?</span>
-                          <p>{upgrade.build}</p>
-                        </div>
-                      </div>
-                    </RoughFrame>
-                  </article>
-                {/each}
-              </div>
-            </div>
-          {/each}
-        </div>
+            </RoughFrame>
+          </article>
+        {/each}
       </div>
     </div>
   </section>
 </main>
+
+<footer class="site-footer">
+  <div class="section-shell footer-layout">
+    <a href="https://hackclub.com">Hack Club</a>
+    <a href="https://hackclub.com/privacy-and-terms">Privacy &amp; Terms</a>
+    <a href="https://github.com/johnathanmcphilbin/Buddy" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://callum-moody.carrd.co/" target="_blank" rel="noopener">Art by Callum Moody</a>
+  </div>
+</footer>
 
 {#if selectedItem}
   <div class="modal-backdrop" role="presentation" on:click={closeModal}>
@@ -439,6 +403,12 @@
     color: var(--muted);
   }
 
+  .shop-tracking a {
+    color: var(--red);
+    font-weight: 800;
+    text-decoration: underline;
+  }
+
   .balance-readout {
     margin-top: 8px;
     width: min(100%, 300px);
@@ -515,81 +485,45 @@
     color: var(--paper);
   }
 
-  .shop-tree-section {
+  .submit-callout {
+    display: block;
+    margin-top: 6px;
+    width: fit-content;
+    text-decoration: none;
+    cursor: var(--crosshair);
+  }
+
+  .submit-callout :global(.rough-frame-content) {
+    padding: 12px 20px;
+  }
+
+  .submit-callout-inner {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: var(--ink);
+  }
+
+  .submit-callout-inner strong {
+    color: var(--red);
+  }
+
+  .shop-catalog-section {
     padding: clamp(20px, 4vw, 40px) clamp(18px, 4vw, 54px);
   }
 
-  .shop-tree {
+  .shop-catalog {
     display: grid;
-    justify-items: center;
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+    align-items: start;
   }
 
-  .buddy-node {
-    width: 132px;
-  }
-
-  .buddy-node :global(.rough-frame-content) {
-    display: grid;
-    place-items: center;
-    aspect-ratio: 1;
-  }
-
-  .buddy-node-label {
+  .upgrade-category {
+    justify-self: start;
+    font-size: 0.7rem;
     font-weight: 800;
-    font-size: 1rem;
-    letter-spacing: 0.02em;
-  }
-
-  .branch-row {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
-    gap: clamp(24px, 3vw, 48px);
-    margin-top: 4px;
-  }
-
-  .branch {
-    width: min(100%, 300px);
-    display: grid;
-    justify-items: center;
-    gap: 4px;
-  }
-
-  .branch-connector {
-    width: 20px;
-    height: 44px;
-  }
-
-  .branch-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-
-  .branch-icon {
-    width: 30px;
-    height: 30px;
+    letter-spacing: 0.04em;
     color: var(--accent);
-  }
-
-  .branch-icon svg {
-    width: 100%;
-    height: 100%;
-  }
-
-  .branch-header h2 {
-    font-size: 1.2rem;
-    font-weight: 800;
-  }
-
-  .branch-items {
-    display: grid;
-    gap: 18px;
-    width: 100%;
   }
 
   .upgrade-inner {
@@ -704,15 +638,4 @@
     font-size: 0.88rem;
   }
 
-  @media (max-width: 860px) {
-    .branch-row {
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .branch {
-      width: 100%;
-      max-width: 420px;
-    }
-  }
 </style>

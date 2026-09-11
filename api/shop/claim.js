@@ -1,14 +1,19 @@
 import { getSession } from '../_lib/session.js';
 import { getAuthenticatedProfile } from '../_lib/hackatime-server.js';
-import { getLatestLedgerEntry, getTotalSpentBits, createShopClaim } from '../_lib/airtable.js';
+import { getAllLedgerEntries, getTotalSpentBits, createShopClaim } from '../_lib/airtable.js';
 import { getShopItem } from '../_lib/shop-inventory.js';
 import { sendReviewEmail } from '../_lib/email.js';
 import { availableBits } from '../_lib/balance.js';
-import { acquireClaimLock } from '../_lib/claim-lock.js';
 import { escapeHtml } from '../_lib/html.js';
 
 const REVIEWER_EMAIL = process.env.REVIEWER_EMAIL?.trim() || 'johnathanmcphilbin2@gmail.com';
 
+// No distributed lock: two claims landing in the same instant could both
+// pass the balance check before either write lands (a real but narrow race,
+// accepted for simplicity over depending on external lock storage). Bits
+// are only ever granted by the organizer approving a ledger entry in
+// Airtable, so the worst case is a slight over-claim caught on review, not
+// a participant minting their own balance.
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -18,37 +23,24 @@ export default async function handler(req, res) {
   const item = getShopItem(req.body?.itemId);
   if (!item) return res.status(400).json({ error: 'Unknown item.' });
 
-  let release;
-  let writeUncertain = false;
   try {
-    if (process.env.BITS_ACCOUNT_IDS_MIGRATED !== 'true') {
-      return res.status(503).json({ error: 'Balances are temporarily unavailable during account verification.', balance: 0 });
-    }
     const profile = await getAuthenticatedProfile(session.hackatimeAccessToken);
     if (profile.trustLevel === 'red') return res.status(403).json({ error: 'This account cannot earn or spend Bits.' });
-    release = await acquireClaimLock(profile.accountId);
-    if (!release) return res.status(409).json({ error: 'A previous claim is processing or needs review. Please wait before trying again.' });
 
-    const [entry, spent] = await Promise.all([
-      getLatestLedgerEntry(profile.accountId),
-      getTotalSpentBits(profile.accountId)
+    const [entries, spent] = await Promise.all([
+      getAllLedgerEntries(session.hackatimeEmail),
+      getTotalSpentBits(session.hackatimeEmail)
     ]);
-    const balance = availableBits(entry, spent);
+    const balance = availableBits(entries, spent);
     if (balance < item.price) return res.status(200).json({ claimed: false, error: 'You need more Bits for this upgrade.', balance });
 
-    writeUncertain = true;
     await createShopClaim({
-      accountId: profile.accountId,
       hackatimeUsername: profile.username,
       email: session.hackatimeEmail,
       itemTitle: item.title,
       itemName: item.item,
       price: item.price
     });
-    // Confirm the debit is visible before releasing the cross-worker lock.
-    const recordedSpent = await getTotalSpentBits(profile.accountId);
-    if (recordedSpent < spent + item.price) throw new Error('Debit needs reconciliation');
-    writeUncertain = false;
 
     // Notification failure must not turn a completed debit into a failed claim.
     try {
@@ -65,10 +57,6 @@ export default async function handler(req, res) {
     }
     return res.status(200).json({ claimed: true, balance: balance - item.price, group: item.group });
   } catch {
-    return res.status(503).json({ error: writeUncertain ? 'Your claim needs review. Please do not submit it again.' : 'Claims are temporarily unavailable. Please try again later.' });
-  } finally {
-    if (release && !writeUncertain) {
-      try { await release(); } catch { console.error('Claim lock requires reconciliation.'); }
-    }
+    return res.status(503).json({ error: 'Claims are temporarily unavailable. Please try again later.' });
   }
 }

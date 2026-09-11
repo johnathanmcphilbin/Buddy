@@ -98,102 +98,131 @@
   }
 </script>
 
-<section class="section hackatime-section" id="hackatime">
-  <div class="section-shell">
-    <div class="hackatime-heading">
-      <p class="eyebrow">CONNECT HACKATIME</p>
-      <h2>How many hours have you put in?</h2>
-      <p class="section-lede">Connect Hackatime and pick which project is your Buddy to see your real tracked hours.</p>
-    </div>
-
-    <div class="hackatime-panel">
-      <RoughFrame stroke="#338eda" fill="#fffdf6" seed={41} radius={24} roughness={2}>
-        <div class="hackatime-inner">
-          {#if isLoading}
-            <span class="hackatime-status">Checking connection…</span>
-          {:else if status.banned}
-            <span class="hackatime-status">Not connected</span>
-            <p class="hackatime-banned">This Hackatime account has been flagged by Hackatime's trust system and can't be connected here.</p>
-          {:else if !status.connected}
-            <span class="hackatime-status">Not connected</span>
-            <button type="button" class="button secondary-button" on:click={connect}>CONNECT HACKATIME</button>
-          {:else if !status.email}
-            <span class="hackatime-status">Connected</span>
-            <p class="hackatime-picker-label">YOUR EMAIL</p>
-            <p class="hackatime-email-hint">We use this (not your Hackatime username) to find your account when you submit or spend Bits.</p>
-            <div class="hackatime-connect-row">
-              <input
-                class="hackatime-input"
-                type="email"
-                placeholder="you@example.com"
-                bind:value={emailInput}
-                on:keydown={(event) => event.key === 'Enter' && saveEmail()}
-                disabled={isSavingEmail}
-              />
-              <button type="button" class="button secondary-button" on:click={saveEmail} disabled={isSavingEmail}>
-                {isSavingEmail ? 'Saving…' : 'Save email'}
-              </button>
-            </div>
-            <button type="button" class="hackatime-reset" on:click={disconnect}>Disconnect</button>
-          {:else if !status.project}
-            <span class="hackatime-status">Connected as {status.email}</span>
-            <p class="hackatime-picker-label">YOUR BUDDY PROJECT</p>
-            <div class="hackatime-project-list">
-              {#each status.projects as project}
-                <button type="button" class="hackatime-project" on:click={() => chooseProject(project.name)} disabled={isSelecting}>
-                  {project.name}
-                </button>
-              {/each}
-            </div>
-            <button type="button" class="hackatime-reset" on:click={disconnect}>Disconnect</button>
-          {:else}
-            <span class="hackatime-status">Connected as {status.email}</span>
-            <p class="hackatime-picker-label">YOUR BUDDY PROJECT</p>
-            <p class="hackatime-project-name">{status.project}</p>
-            <p class="hackatime-hours-label">HOURS BUILT</p>
-            <p class="hackatime-hours-value">{status.hours.toFixed(1)}</p>
-            <button type="button" class="hackatime-reset" on:click={disconnect}>Disconnect</button>
-          {/if}
-
-          {#if errorMessage}
-            <p class="hackatime-error">{errorMessage}</p>
-          {/if}
-        </div>
-      </RoughFrame>
-    </div>
+<div class="hackatime-widget" id="hackatime">
+  <div class="hackatime-widget-heading">
+    <p class="hackatime-widget-label">CONNECT HACKATIME</p>
+    <a class="lapse-link" href="https://lapse.hackclub.com/" target="_blank" rel="noopener">TRACK WITH LAPSE →</a>
   </div>
-</section>
+
+  <div class="hackatime-panel">
+    <RoughFrame stroke="#338eda" fill="#fffdf6" seed={41} radius={18} roughness={2}>
+      <div class="hackatime-inner">
+        {#if isLoading}
+          <span class="hackatime-status">Checking connection…</span>
+        {:else if status.banned}
+          <span class="hackatime-status">Not connected</span>
+          <p class="hackatime-banned">This Hackatime account has been flagged by Hackatime's trust system and can't be connected here.</p>
+        {:else if !status.connected}
+          <span class="hackatime-status">Not connected</span>
+          <button type="button" class="button secondary-button" on:click={connect}>CONNECT HACKATIME</button>
+        {:else if !status.email}
+          <span class="hackatime-status">Connected</span>
+          <p class="hackatime-picker-label">YOUR EMAIL</p>
+          <p class="hackatime-email-hint">We use this (not your Hackatime username) to find your account when you submit or spend Bits.</p>
+          <div class="hackatime-connect-row">
+            <input
+              class="hackatime-input"
+              type="email"
+              placeholder="you@example.com"
+              bind:value={emailInput}
+              on:keydown={(event) => event.key === 'Enter' && saveEmail()}
+              disabled={isSavingEmail}
+            />
+            <button type="button" class="button secondary-button" on:click={saveEmail} disabled={isSavingEmail}>
+              {isSavingEmail ? 'Saving…' : 'Save email'}
+            </button>
+          </div>
+          <button type="button" class="hackatime-reset" on:click={disconnect}>Disconnect</button>
+        {:else if !status.project}
+          <span class="hackatime-status">Connected as {status.email}</span>
+          <p class="hackatime-picker-label">YOUR BUDDY PROJECT</p>
+          <div class="hackatime-project-list">
+            {#each status.projects as project}
+              <button type="button" class="hackatime-project" on:click={() => chooseProject(project.name)} disabled={isSelecting}>
+                {project.name}
+              </button>
+            {/each}
+          </div>
+          <button type="button" class="hackatime-reset" on:click={disconnect}>Disconnect</button>
+        {:else}
+          <span class="hackatime-status">Connected as {status.email}</span>
+          <p class="hackatime-picker-label">YOUR BUDDY PROJECT</p>
+          <p class="hackatime-project-name">{status.project}</p>
+          <p class="hackatime-hours-label">HOURS BUILT</p>
+          <p class="hackatime-hours-value">{status.hours.toFixed(1)}</p>
+          <button type="button" class="hackatime-reset" on:click={disconnect}>Disconnect</button>
+        {/if}
+
+        {#if errorMessage}
+          <p class="hackatime-error">{errorMessage}</p>
+        {/if}
+      </div>
+    </RoughFrame>
+  </div>
+</div>
 
 <style>
-  .hackatime-section {
-    padding-top: clamp(40px, 5vw, 64px);
-    padding-bottom: clamp(40px, 5vw, 64px);
+  .hackatime-widget {
+    width: min(100%, 400px);
+    margin: 0;
   }
 
-  .hackatime-heading {
-    display: grid;
-    justify-items: center;
+  .hackatime-widget-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
     gap: 10px;
-    text-align: center;
-    max-width: 560px;
-    margin: 0 auto;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .hackatime-widget-label {
+    font-weight: 800;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .lapse-link {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: var(--blue);
+    text-decoration: underline;
   }
 
   .hackatime-panel {
-    width: min(100%, 480px);
-    margin: 28px auto 0;
+    width: 100%;
   }
 
   .hackatime-inner {
     display: grid;
     justify-items: start;
-    gap: 10px;
-    padding: 24px;
+    gap: 5px;
+    padding: 12px 14px;
+  }
+
+  .hackatime-inner .button {
+    min-height: 34px;
+    padding: 6px 14px;
+    border-radius: 9px;
+    font-size: 0.78rem;
+    box-shadow: 0 3px 0 var(--shadow);
+  }
+
+  .hackatime-inner .button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 0 var(--shadow);
+  }
+
+  .hackatime-inner .button:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--shadow);
   }
 
   .hackatime-status {
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     letter-spacing: 0.03em;
     color: var(--muted);
   }
@@ -201,34 +230,34 @@
   .hackatime-picker-label,
   .hackatime-hours-label {
     font-weight: 800;
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     letter-spacing: 0.04em;
     color: var(--muted);
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   .hackatime-email-hint {
-    font-size: 0.82rem;
+    font-size: 0.74rem;
     color: var(--muted);
     font-weight: 500;
-    max-width: 380px;
+    max-width: 340px;
   }
 
   .hackatime-connect-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
   }
 
   .hackatime-input {
-    flex: 1 1 200px;
-    min-height: 46px;
-    padding: 10px 14px;
+    flex: 1 1 160px;
+    min-height: 34px;
+    padding: 6px 10px;
     border: 2px solid var(--ink);
-    border-radius: 12px;
+    border-radius: 9px;
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     background: var(--white);
     color: var(--ink);
   }
@@ -237,8 +266,8 @@
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
-    gap: 6px;
-    max-height: 190px;
+    gap: 5px;
+    max-height: 140px;
     overflow-y: auto;
     padding: 2px;
     width: 100%;
@@ -248,9 +277,9 @@
     border: 2px solid var(--ink);
     border-radius: 999px;
     background: var(--white);
-    padding: 5px 12px;
+    padding: 3px 10px;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     cursor: var(--crosshair);
   }
 
@@ -262,11 +291,11 @@
   .hackatime-project-name {
     font-family: 'Kalam', cursive;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
   }
 
   .hackatime-hours-value {
-    font-size: clamp(2rem, 4vw, 2.6rem);
+    font-size: clamp(1.15rem, 2vw, 1.4rem);
     font-weight: 800;
     color: var(--blue);
     line-height: 1;
@@ -277,7 +306,7 @@
     border: none;
     padding: 0;
     color: var(--muted);
-    font-size: 0.85rem;
+    font-size: 0.74rem;
     font-weight: 600;
     text-decoration: underline;
     text-decoration-thickness: 2px;
@@ -287,13 +316,13 @@
 
   .hackatime-error {
     color: var(--red);
-    font-size: 0.88rem;
+    font-size: 0.78rem;
     font-weight: 600;
   }
 
   .hackatime-banned {
     color: var(--red);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 600;
   }
 </style>
