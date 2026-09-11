@@ -134,10 +134,10 @@
         {
           id: 'more-senses',
           title: 'Give Buddy More Senses',
-          item: 'Sensor Hardware Grant',
-          price: 5,
-          reason: 'Add things like light, distance, temperature, or motion sensing.',
-          build: 'Make Buddy react to the room, not just what the camera sees.',
+          item: '$50 Sensor Hardware Grant',
+          price: 10,
+          reason: 'Get an ESP32 board, a breadboard, jumper wires, and sensors such as a BME280 for temperature or a VL53L0X for distance.',
+          build: 'Have Buddy tell you when your room gets too warm, or greet you when you move closer to your desk. Read the sensor data and write the rules that decide what Buddy says.',
           group: 'more-senses'
         }
       ]

@@ -83,8 +83,8 @@ export const SHOP_INVENTORY = [
   {
     id: 'more-senses',
     title: 'Give Buddy More Senses',
-    item: 'Sensor Hardware Grant',
-    price: 5,
+    item: '$50 Sensor Hardware Grant',
+    price: 10,
     group: 'more-senses'
   }
 ];
