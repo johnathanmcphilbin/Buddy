@@ -120,6 +120,7 @@
   ];
   let openFaq = 0;
   let heroCta;
+  let heroVideo;
 
   function bounceCta() {
     gsap.fromTo(
@@ -130,6 +131,9 @@
   }
 
   onMount(() => {
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      heroVideo?.play().catch(() => {});
+    }
     gsap.fromTo(
       heroCta,
       { scale: 0.86, rotate: -1.5 },
@@ -198,7 +202,18 @@
       <div class="hero-visual">
         <RoughFrame stroke="#ff8c37" fill="#fffdf6" seed={19} radius={34} roughness={2.4}>
           <div class="hero-stage">
-            <img class="hero-stage-image" src="/images/demo.png" alt="Example Buddy detection with objects boxed and labeled" />
+            <video
+              class="hero-stage-video"
+              bind:this={heroVideo}
+              src="/videos/C0740.mp4"
+              poster="/videos/C0740-poster.jpg"
+              aria-label="Buddy object detection demo"
+              muted
+              loop
+              playsinline
+              controls
+              preload="metadata"
+            ></video>
           </div>
         </RoughFrame>
         <img class="hero-buddy-badge" src="/images/buddy.png" alt="Buddy" />

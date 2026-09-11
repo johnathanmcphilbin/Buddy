@@ -286,15 +286,18 @@ h3 {
 
 .hero-visual {
   position: relative;
+  width: min(100%, 360px);
+  justify-self: center;
 }
 
 .hero-visual .rough-frame-content {
-  min-height: min(64vw, 520px);
-  padding: clamp(24px, 5vw, 54px);
+  padding: 16px;
 }
 
 .hero-buddy-badge {
   position: absolute;
+  z-index: 2;
+  pointer-events: none;
   right: clamp(-18px, -3vw, -10px);
   bottom: clamp(-18px, -3vw, -10px);
   width: clamp(72px, 10vw, 108px);
@@ -304,24 +307,24 @@ h3 {
 }
 
 .hero-stage {
-  min-height: 420px;
+  aspect-ratio: 9 / 16;
   display: grid;
   place-items: center;
   position: relative;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 18px;
   background:
     radial-gradient(circle at 16px 16px, rgba(51, 142, 218, 0.12) 2px, transparent 2px),
     var(--paper-soft);
   background-size: 34px 34px;
 }
 
-.hero-stage-image {
-  position: absolute;
-  inset: 0;
+.hero-stage-video {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #191919;
 }
 
 .brand-bursts {
@@ -1136,10 +1139,6 @@ h3 {
   .steps-grid,
   .showcase-grid {
     grid-template-columns: 1fr;
-  }
-
-  .hero-stage {
-    min-height: 340px;
   }
 
   .example-readout .rough-frame-content {
