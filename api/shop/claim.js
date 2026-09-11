@@ -48,7 +48,7 @@ export default async function handler(req, res) {
         to: REVIEWER_EMAIL,
         subject: `Buddy shop claim: ${item.title}`,
         html: `<p><strong>${escapeHtml(session.hackatimeEmail)}</strong> (Hackatime: ${escapeHtml(profile.username)}) claimed <strong>${escapeHtml(item.title)}</strong> for ${item.price} Bits.</p>
-          <p>You need to send them: <strong>${escapeHtml(item.item)}</strong></p>
+          <p>Reward to arrange: <strong>${escapeHtml(item.item)}</strong></p>
           <p>New balance: ${balance - item.price} Bits.</p>
           <p>Mark it Fulfilled in the Buddy Shop Claims table once it's sent.</p>`
       });

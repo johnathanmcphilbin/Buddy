@@ -14,7 +14,10 @@
         {
           id: 'better-eyes',
           title: 'Give Buddy Better Eyes',
-          item: 'Webcam Grant',
+          item: "Webcam reward",
+          fulfillment: "Shipped hardware",
+          maxValue: "Up to $30 product + $10 shipping",
+          examples: ["USB WEBCAM", "WEBCAM MOUNT"],
           price: 8,
           reason: 'Point Buddy somewhere your laptop can’t.',
           build: 'Point Buddy at your desk, doorway, shelf, or anywhere your laptop can’t.',
@@ -23,7 +26,10 @@
         {
           id: 'better-lighting',
           title: 'Better Lighting',
-          item: 'USB Desk Light',
+          item: "Lighting reward",
+          fulfillment: "Shipped hardware",
+          maxValue: "Up to $20 product + $10 shipping",
+          examples: ["USB RING LIGHT", "CLIP-ON LIGHT", "MINI LED PANEL"],
           price: 6,
           reason: 'Give Buddy cleaner training photos and more reliable detections.',
           build: 'Make your detector work better in messy rooms or darker spaces.',
@@ -32,7 +38,10 @@
         {
           id: 'better-vision',
           title: 'Give Buddy Better Vision',
-          item: 'Roboflow Credits',
+          item: "Roboflow credit grant",
+          fulfillment: "Digital credits",
+          maxValue: "Up to $10 in digital credits",
+          examples: ["ROBOFLOW TRAINING CREDITS", "MORE INFERENCE", "MORE DATASET VERSIONS"],
           price: 2,
           reason: 'Train more, test more, and keep improving your detector.',
           build: 'Train more versions of your detector and compare what works best.',
@@ -48,7 +57,10 @@
         {
           id: 'brain-10',
           title: 'Give Buddy a Brain',
-          item: '$10 AI Credit Grant',
+          item: "AI API credit grant",
+          fulfillment: "Digital credits",
+          maxValue: "Up to $10 in digital credits",
+          examples: ["OPENAI API CREDITS", "OTHER AI API CREDITS"],
           price: 2,
           reason: 'Replace fixed responses with generated ones.',
           build: 'Let Buddy come up with its own responses instead of using fixed sentences.',
@@ -57,7 +69,10 @@
         {
           id: 'brain-25',
           title: 'Give Buddy a Bigger Brain',
-          item: '$25 AI Credit Grant',
+          item: "AI API credit grant",
+          fulfillment: "Digital credits",
+          maxValue: "Up to $25 in digital credits",
+          examples: ["MORE AI CREDITS", "VISION + TEXT MODELS", "LONGER RUNNING ASSISTANT FEATURES"],
           price: 5,
           reason: 'Take Buddy further with generated responses and smarter behavior.',
           build: 'Add more personality, better responses, or more advanced assistant behavior.',
@@ -66,7 +81,10 @@
         {
           id: 'memory',
           title: 'Give Buddy a Memory',
-          item: 'Database / Storage Credit Grant',
+          item: "Database / storage credit grant",
+          fulfillment: "Digital credits",
+          maxValue: "Up to $15 in digital credits",
+          examples: ["SUPABASE", "NEON", "FIREBASE", "UPSTASH"],
           price: 3,
           reason: 'Let Buddy remember what happened earlier instead of only reacting to the current frame.',
           build: 'Make Buddy remember routines, past detections, or what you usually forget.',
@@ -75,7 +93,10 @@
         {
           id: 'training-power',
           title: 'Train Buddy Properly',
-          item: 'Roboflow Core',
+          item: "Roboflow grant",
+          fulfillment: "Digital credits",
+          maxValue: "Up to $100 toward Roboflow Core or credits",
+          examples: ["ROBOFLOW CORE", "MORE TRAINING", "MORE INFERENCE"],
           price: 20,
           reason: 'For when you want to seriously keep building the vision side.',
           build: 'Push the vision side further with more serious training and testing.',
@@ -91,7 +112,10 @@
         {
           id: 'ears',
           title: 'Give Buddy Ears',
-          item: 'USB Microphone',
+          item: "Microphone reward",
+          fulfillment: "Shipped hardware",
+          maxValue: "Up to $25 product + $10 shipping",
+          examples: ["USB MICROPHONE", "LAV MICROPHONE"],
           price: 7,
           reason: 'Let Buddy react to what it hears as well as what it sees.',
           build: 'Build a Buddy that listens for commands while also watching what is happening.',
@@ -100,7 +124,10 @@
         {
           id: 'custom-voice',
           title: 'Give Buddy a Voice',
-          item: 'ElevenLabs Voice Creator',
+          item: "ElevenLabs grant",
+          fulfillment: "Digital credits",
+          maxValue: "Up to $15 toward ElevenLabs credits or a subscription",
+          examples: ["ELEVENLABS CREDITS", "CUSTOM VOICE GENERATION"],
           price: 3,
           reason: 'Create a custom voice that sounds exactly how you want your Buddy to sound.',
           build: 'Give Buddy its own personality with a voice you designed just for it.',
@@ -116,7 +143,10 @@
         {
           id: 'body',
           title: 'Give Buddy a Body',
-          item: '$25 Hardware Grant',
+          item: "Hardware grant",
+          fulfillment: "Source your own parts",
+          maxValue: "Up to $25 to buy your own parts",
+          examples: ["ESP32", "SERVO", "LEDS", "BUTTONS", "BREADBOARD"],
           price: 5,
           reason: 'Buy LEDs, servos, buttons, displays, or whatever lets Buddy affect the real world.',
           build: 'Make Buddy light something up, move something, or control something physical.',
@@ -125,7 +155,10 @@
         {
           id: 'face',
           title: 'Give Buddy a Face',
-          item: 'Small Display Grant',
+          item: "Display reward",
+          fulfillment: "Shipped hardware",
+          maxValue: "Up to $30 product + $10 shipping",
+          examples: ["OLED DISPLAY", "TFT SCREEN", "LED MATRIX", "ESP32 DISPLAY"],
           price: 8,
           reason: 'Put Buddy’s status, expressions, or responses on a physical screen.',
           build: 'Give Buddy a little face that changes depending on what it sees.',
@@ -134,7 +167,10 @@
         {
           id: 'more-senses',
           title: 'Give Buddy More Senses',
-          item: '$50 Sensor Hardware Grant',
+          item: "Sensor hardware grant",
+          fulfillment: "Source your own parts",
+          maxValue: "Up to $50 to buy your own parts",
+          examples: ["BME280", "VL53L0X", "PIR SENSOR", "LIGHT SENSOR", "ESP32", "BREADBOARD"],
           price: 10,
           reason: 'Get an ESP32 board, a breadboard, jumper wires, and sensors such as a BME280 for temperature or a VL53L0X for distance.',
           build: 'Have Buddy tell you when your room gets too warm, or greet you when you move closer to your desk. Read the sensor data and write the rules that decide what Buddy says.',
@@ -240,14 +276,18 @@
 <main class="shop-page">
   <section class="shop-top">
     <div class="section-shell shop-top-shell">
-      <p class="eyebrow">BUDDY SHOP</p>
+      <p class="eyebrow">BUDDY GRANT SHOP</p>
       <div class="heading-row">
         <h1>Upgrade your Buddy.</h1>
         <img class="heading-sticker" src="/images/buddy-star.png" alt="" aria-hidden="true" />
       </div>
-      <p class="shop-subhead">Every hour you build earns you 1 Bit. Spend your Bits on things that make Buddy see, think, hear, and do more.</p>
+      <p class="shop-subhead">Every hour you build earns you 1 Bit. Spend your Bits on grants, digital credits, and shipped hardware to help Buddy see, think, hear, and do more.</p>
 
-      <p class="shop-rate">1 HOUR = 1 BIT</p>
+      <p class="shop-rate">1 HOUR = 1 BIT · 1 BIT = $5</p>
+      <div class="shop-grant-note">
+        <p><strong>Know what you’re claiming.</strong> Every upgrade shows its maximum value and how you receive it. “You could get” lists examples, not a fixed model or a bundle of everything shown.</p>
+        <p>For hardware we ship, $10 (2 Bits) of the total covers shipping. Body and More Senses are grants to buy your own parts, so the full $25 or $50 goes toward your purchase.</p>
+      </div>
       <p class="shop-tracking">Tracked with <a href="https://lapse.hackclub.com/" target="_blank" rel="noopener">Lapse</a> and Hackatime.</p>
 
       <div class="balance-readout">
@@ -294,8 +334,18 @@
                 <span class="upgrade-category" style={`--accent:${upgrade.accent}`}>{upgrade.category}</span>
                 <h3>{upgrade.title}</h3>
                 <p class="upgrade-item">{upgrade.item}</p>
+                <span class="upgrade-fulfillment">{upgrade.fulfillment}</span>
                 <span class="upgrade-price" style={`--accent:${upgrade.accent}`}>{upgrade.price} BITS</span>
+                <p class="upgrade-value">{upgrade.maxValue}</p>
                 <p class="upgrade-reason">{upgrade.reason}</p>
+                <div class="upgrade-examples" style={`--accent:${upgrade.accent}`}>
+                  <span class="upgrade-examples-label" id={`examples-${upgrade.id}`}>YOU COULD GET</span>
+                  <ul aria-labelledby={`examples-${upgrade.id}`}>
+                    {#each upgrade.examples as example}
+                      <li>{example}</li>
+                    {/each}
+                  </ul>
+                </div>
 
                 <button type="button" class="button claim-button" style={`--accent:${upgrade.accent}`} on:click={() => openClaim(upgrade)}>
                   CLAIM UPGRADE
@@ -337,6 +387,8 @@
         {:else if $bits >= selectedItem.price}
           <div class="modal-inner">
             <h3>Spend {selectedItem.price} Bits?</h3>
+            <p><strong>{selectedItem.item}</strong> · {selectedItem.fulfillment}</p>
+            <p>{selectedItem.maxValue}</p>
             <p>This will use {selectedItem.price} of your {$bits} earned Bits.</p>
             <p>You’ll have {$bits - selectedItem.price} Bits left.</p>
             <div class="modal-actions">
@@ -541,6 +593,68 @@
   .upgrade-item {
     font-weight: 700;
     color: var(--ink);
+  }
+
+  .shop-grant-note {
+    display: grid;
+    gap: 8px;
+    max-width: 720px;
+    padding: 14px 18px;
+    border-left: 3px solid var(--orange);
+    background: var(--paper-soft);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+
+  .upgrade-fulfillment {
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  .upgrade-value {
+    font-size: 1rem;
+    line-height: 1.45;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .upgrade-examples {
+    display: grid;
+    gap: 8px;
+    margin: 6px 0;
+    padding-top: 12px;
+    border-top: 2px dashed rgba(38, 50, 77, 0.18);
+    min-width: 0;
+  }
+
+  .upgrade-examples-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .upgrade-examples ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .upgrade-examples li {
+    max-width: 100%;
+    padding: 5px 8px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
   }
 
   .upgrade-price {
