@@ -113,7 +113,7 @@
     },
     {
       question: 'What do I submit?',
-      answer: 'A working live webcam demo, your Roboflow project or dataset, and a short video showing Buddy detecting multiple objects and speaking different responses based on what it sees.'
+      answer: 'A working live webcam demo and your Roboflow project or dataset.'
     }
   ];
   let openFaq = 0;
