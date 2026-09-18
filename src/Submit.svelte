@@ -12,6 +12,7 @@
 
   let codeUrl = '';
   let playableUrl = '';
+  let videoUrl = '';
   let howHeard = '';
   let doingWell = '';
   let howImprove = '';
@@ -97,6 +98,7 @@
         body: JSON.stringify({
           codeUrl,
           playableUrl,
+          videoUrl,
           howHeard,
           doingWell,
           howImprove,
@@ -203,6 +205,12 @@
                   <span>Playable URL</span>
                   <input type="url" bind:value={playableUrl} placeholder="Link to your demo video or a live version" required disabled={isSubmitting} />
                   <span class="submit-field-hint">Must be a public, permanent URL with no login required. Not Streamlit; use Nest, Railway, Render, or Vercel instead.</span>
+                </label>
+
+                <label class="submit-field">
+                  <span>Video URL</span>
+                  <input type="url" bind:value={videoUrl} placeholder="Link to a short video showing Buddy in action" required disabled={isSubmitting} />
+                  <span class="submit-field-hint">A short video showing Buddy detecting multiple objects and speaking different responses based on what it sees. YouTube, Google Drive, etc. — just make sure it's public.</span>
                 </label>
 
                 <label class="submit-field">

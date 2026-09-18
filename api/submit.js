@@ -15,6 +15,7 @@ const MINIMUM_PROJECT_HOURS = 2;
 const REQUIRED_FIELDS = [
   'codeUrl',
   'playableUrl',
+  'videoUrl',
   'firstName',
   'lastName',
   'email',
@@ -55,8 +56,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (!isValidUrl(body.codeUrl) || !isValidUrl(body.playableUrl)) {
-    res.status(400).json({ error: 'Code URL and Playable URL must be valid URLs.' });
+  if (!isValidUrl(body.codeUrl) || !isValidUrl(body.playableUrl) || !isValidUrl(body.videoUrl)) {
+    res.status(400).json({ error: 'Code URL, Playable URL, and Video URL must be valid URLs.' });
     return;
   }
 
@@ -137,6 +138,7 @@ export default async function handler(req, res) {
       ?? (await createYswsSubmission({
         codeUrl: body.codeUrl,
         playableUrl: body.playableUrl,
+        videoUrl: body.videoUrl,
         howHeard: body.howHeard,
         doingWell: body.doingWell,
         howImprove: body.howImprove,
@@ -178,6 +180,7 @@ export default async function handler(req, res) {
             <li>New tracked hours since last submission: ${trackedHours.toFixed(1)}</li>
             <li>Code URL: <a href="${escapeHtml(body.codeUrl)}">${escapeHtml(body.codeUrl)}</a></li>
             <li>Playable URL: <a href="${escapeHtml(body.playableUrl)}">${escapeHtml(body.playableUrl)}</a></li>
+            <li>Video URL: <a href="${escapeHtml(body.videoUrl)}">${escapeHtml(body.videoUrl)}</a></li>
             ${body.roboflowUrl ? `<li>Roboflow: <a href="${escapeHtml(body.roboflowUrl)}">${escapeHtml(body.roboflowUrl)}</a></li>` : ''}
           </ul>
           <p>${escapeHtml(fullDescription).replace(/\n/g, '<br />')}</p>

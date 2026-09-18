@@ -43,6 +43,7 @@ export async function createYswsSubmission(submission) {
   const fields = {
     'Code URL': submission.codeUrl,
     'Playable URL': submission.playableUrl,
+    'Video URL': submission.videoUrl,
     'How did you hear about this?': submission.howHeard,
     'What are we doing well?': submission.doingWell,
     'How can we improve?': submission.howImprove,

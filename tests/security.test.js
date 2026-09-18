@@ -110,8 +110,8 @@ test('set-email allows an email with no prior ledger history', async () => {
 });
 test('submit rejects an email whose ledger history belongs to a different Hackatime account', async () => {
   options.ledgerRecords = [{ fields: { 'Hackatime Username': 'victim-owner', 'Hackatime Project': 'Buddy' } }];
-  const body = Object.fromEntries(['codeUrl', 'playableUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
-  body.codeUrl = 'https://example.com'; body.playableUrl = 'https://example.com'; body.email = 'victim@example.com';
+  const body = Object.fromEntries(['codeUrl', 'playableUrl', 'videoUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
+  body.codeUrl = 'https://example.com'; body.playableUrl = 'https://example.com'; body.videoUrl = 'https://example.com'; body.email = 'victim@example.com';
   const res = response(); await submit(request(body), res);
   assert.equal(res.code, 409);
 });
@@ -188,14 +188,14 @@ test('HTML escaping blocks email markup injection', () => {
   assert.equal(escapeHtml('<img src="x">&'), '&lt;img src=&quot;x&quot;&gt;&amp;');
 });
 test('submission rejects script URLs', async () => {
-  const body = Object.fromEntries(['codeUrl', 'playableUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
+  const body = Object.fromEntries(['codeUrl', 'playableUrl', 'videoUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
   body.codeUrl = 'javascript:alert(1)'; body.playableUrl = 'https://example.com';
   const res = response(); await submit(request(body), res); assert.equal(res.code, 400);
 });
 test('submission below the minimum project hours is rejected', async () => {
   options.projectSeconds = 3600; // 1 hour, under the 2-hour minimum
-  const body = Object.fromEntries(['codeUrl', 'playableUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
-  body.codeUrl = 'https://example.com'; body.playableUrl = 'https://example.com';
+  const body = Object.fromEntries(['codeUrl', 'playableUrl', 'videoUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
+  body.codeUrl = 'https://example.com'; body.playableUrl = 'https://example.com'; body.videoUrl = 'https://example.com';
   const res = response(); await submit(request(body), res);
   assert.equal(res.code, 400);
 });
@@ -207,8 +207,8 @@ test('an overlapping duplicate submission is caught before writing a second ledg
     [],
     [{ fields: { 'Hackatime Project': 'Buddy', 'Tracked Hours At Submission': 10, 'Submitted At': new Date().toISOString() } }]
   ];
-  const body = Object.fromEntries(['codeUrl', 'playableUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
-  body.codeUrl = 'https://example.com'; body.playableUrl = 'https://example.com';
+  const body = Object.fromEntries(['codeUrl', 'playableUrl', 'videoUrl', 'firstName', 'lastName', 'email', 'description', 'githubUsername', 'addressLine1', 'city', 'stateProvince', 'country', 'zip', 'birthday'].map((k) => [k, 'test']));
+  body.codeUrl = 'https://example.com'; body.playableUrl = 'https://example.com'; body.videoUrl = 'https://example.com';
   const res = response(); await submit(request(body), res);
   assert.equal(res.code, 409);
 });
